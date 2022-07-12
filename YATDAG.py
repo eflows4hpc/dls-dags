@@ -14,7 +14,7 @@ def_args = {
 
 }
 
-with DAG('Yet_Another_Test_DAG', default_args=def_args, description='tey another simple testing dag', schedule_interval=timedelta(days=1), start_date=days_ago(2)) as dag:
+with DAG('Yet_Another_Test_DAG_but_modified', default_args=def_args, description='tey another simple testing dag', schedule_interval=timedelta(days=1), start_date=days_ago(2)) as dag:
     t11 = BashOperator(task_id='print_date1', bash_command='date')
     t12 = BashOperator(task_id='do_noting1', bash_command='sleep 5')
     t21 = BashOperator(task_id='print_date2', bash_command='date')
