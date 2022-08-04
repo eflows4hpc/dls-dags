@@ -4,7 +4,7 @@ import requests
 from airflow.decorators import dag, task
 from airflow.utils.dates import days_ago
 from airflow.operators.python import PythonOperator
-from dags.uploadflow import copy_streams
+from uploadflow import copy_streams
 
 from decors import setup, get_connection, remove
 
@@ -40,7 +40,7 @@ def transfer_image():
             if size>0:
                 print(f"File {remote_name} exists and has {size} bytes")
                 force = params.get('force', True)
-                if force!= True:
+                if force is not True:
                     return 0
                 print("Forcing overwrite")
 
@@ -49,7 +49,7 @@ def transfer_image():
             with requests.get(url, stream=True, verify=False) as r:
                 with sftp_client.open(remote_name, 'wb') as f:
                     f.set_pipelined(pipelined=True)
-                    copy_streams(input=r, output=f)
+                    copy_streams(inp=r, outp=f)
                     
     setup_task = PythonOperator(
         python_callable=setup, task_id='setup_connection')

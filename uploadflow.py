@@ -9,12 +9,14 @@ from airflow.models.connection import Connection
 from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 
+from datacat_integration.hooks import DataCatalogHook
+from datacat_integration.connection import DataCatalogEntry
+
 from b2shareoperator import (add_file, create_draft_record, get_community,
                              submit_draft)
 from decors import get_connection, remove, setup
 from justreg import get_parameter
-from datacat_integration.hooks import DataCatalogHook
-from datacat_integration.connection import DataCatalogEntry
+
 
 default_args = {
     'owner': 'airflow',
@@ -38,21 +40,21 @@ def create_template(hrespo):
         "open_access": hrespo['open_access'] == "True"
     }
 
-def copy_streams(input, output, chunk_size = 1024 * 1000):
+def copy_streams(inp, outp, chunk_size = 1024 * 1000):
     while True:
-        chunk=input.raw.read(chunk_size)
+        chunk=inp.raw.read(chunk_size)
         if not chunk:
             break
         content_to_write = memoryview(chunk)
-        output.write(content_to_write)
+        outp.write(content_to_write)
 
 
 def ssh_download(sftp_client, remote, local):
     #sftp_client.get(remote, local)
-    with sftp_client.open(remote, 'rb') as input:
-        with open(local, 'wb') as output:
+    with sftp_client.open(remote, 'rb') as i:
+        with open(local, 'wb') as o:
             input.set_pipelined(pipelined=True)
-            copy_streams(input=input, output=output)
+            copy_streams(inp=i, outp=o)
 
 
 def ssh2local_copy(ssh_hook, source: str, target: str):

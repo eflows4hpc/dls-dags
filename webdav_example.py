@@ -20,14 +20,13 @@ def webdav_upload():
 
     @task()
     def download(connection_id, **kwargs):
-        
         params = kwargs['params']
         target = Variable.get("working_dir", default_var='/tmp/')
         source = params.get('source', '/tmp/')
         ssh_hook = get_connection(conn_id=connection_id, **kwargs)
 
         mappings = ssh2local_copy(ssh_hook=ssh_hook, source=source, target=target)
-        
+
         return mappings
 
     @task()
@@ -57,7 +56,7 @@ def webdav_upload():
 
     @task
     def print_stats(res):
-        print('Finished')
+        print('Finished', res)
 
     setup_task = PythonOperator(
         python_callable=setup, task_id='setup_connection')
@@ -69,6 +68,5 @@ def webdav_upload():
     en = PythonOperator(python_callable=remove, op_kwargs={
                         'conn_id': a_id}, task_id='cleanup')
     res >> en
-
 
 dag = webdav_upload()
