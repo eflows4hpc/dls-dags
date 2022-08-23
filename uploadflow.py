@@ -33,7 +33,7 @@ def create_template(hrespo):
         ],
         "community": "2d58eb08-af65-4cad-bd25-92f1a17d325b",
         "community_specific": {
-            "90942261-4637-4ac0-97b8-12e1edb38739": {"helmholtz centre": ["Forschungszentrum Jülich"]}
+            "2dc5046b-06b6-449f-bd49-73009c5303b1": {"helmholtz centre": ["Forschungszentrum Jülich"]}
         },
         "open_access": hrespo['open_access'] == "True"
     }
