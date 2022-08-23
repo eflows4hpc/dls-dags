@@ -40,7 +40,7 @@ def create_template(hrespo):
 
 def copy_streams(input, output, chunk_size = 1024 * 1000):
     while True:
-        chunk=input.raw.read(chunk_size)
+        chunk=input.read(chunk_size)
         if not chunk:
             break
         content_to_write = memoryview(chunk)
