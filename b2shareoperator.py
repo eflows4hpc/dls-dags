@@ -36,10 +36,10 @@ def get_record_template():
             "creators":[{"creator_name": "eflows4HPC"}],
             "descriptions":
               [{"description": "Output of eflows4HPC DLS", "description_type": "Abstract"}],
-            "community" : "2d58eb08-af65-4cad-bd25-92f1a17d325b",
-            "community_specific" :{
-                "90942261-4637-4ac0-97b8-12e1edb38739": {"helmholtz centre": ["Forschungszentrum Jülich"]}
-                },
+             "community": "2d58eb08-af65-4cad-bd25-92f1a17d325b",
+        "community_specific": {
+            "2dc5046b-06b6-449f-bd49-73009c5303b1": {"helmholtz centre": ["Forschungszentrum Jülich"]}
+        },
             "open_access": True}
 
 def get_schema(url):

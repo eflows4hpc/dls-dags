@@ -35,14 +35,14 @@ def create_template(hrespo):
         ],
         "community": "2d58eb08-af65-4cad-bd25-92f1a17d325b",
         "community_specific": {
-            "90942261-4637-4ac0-97b8-12e1edb38739": {"helmholtz centre": ["Forschungszentrum Jülich"]}
+            "2dc5046b-06b6-449f-bd49-73009c5303b1": {"helmholtz centre": ["Forschungszentrum Jülich"]}
         },
         "open_access": hrespo['open_access'] == "True"
     }
 
 def copy_streams(inp, outp, chunk_size = 1024 * 1000):
     while True:
-        chunk=inp.raw.read(chunk_size)
+        chunk=input.read(chunk_size)
         if not chunk:
             break
         content_to_write = memoryview(chunk)
@@ -61,7 +61,7 @@ def ssh2local_copy(ssh_hook, source: str, target: str):
     with ssh_hook.get_conn() as ssh_client:
         sftp_client = ssh_client.open_sftp()
         lst = sftp_client.listdir(path=source)
-        
+
         print(f"{len(lst)} objects in {source}")
         mappings = dict()
         for fname in lst:
