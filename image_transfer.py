@@ -49,7 +49,12 @@ def transfer_image():
             with requests.get(url, stream=True, verify=False) as r:
                 with sftp_client.open(remote_name, 'wb') as f:
                     f.set_pipelined(pipelined=True)
-                    copy_streams(inp=r.raw, outp=f)
+                    while True:
+                        chunk=r.raw.read(1024 * 1000)
+                        if not chunk:
+                            break
+                        content_to_write = memoryview(chunk)
+                        f.write(content_to_write)
                     
     setup_task = PythonOperator(
         python_callable=setup, task_id='setup_connection')
