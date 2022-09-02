@@ -42,7 +42,7 @@ def create_template(hrespo):
 
 def copy_streams(inp, outp, chunk_size = 1024 * 1000):
     while True:
-        chunk=input.read(chunk_size)
+        chunk=inp.read(chunk_size)
         if not chunk:
             break
         content_to_write = memoryview(chunk)
@@ -53,7 +53,7 @@ def ssh_download(sftp_client, remote, local):
     #sftp_client.get(remote, local)
     with sftp_client.open(remote, 'rb') as i:
         with open(local, 'wb') as o:
-            input.set_pipelined(pipelined=True)
+            i.set_pipelined(pipelined=True)
             copy_streams(inp=i, outp=o)
 
 
