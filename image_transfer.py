@@ -47,7 +47,7 @@ def transfer_image():
             ssh_client.exec_command(command=f"mkdir -p {target}")
             
             with requests.get(url, stream=True, verify=False) as r:
-                with sftp_client.open(remote_name, 'wb') as f:
+                with sftp_client.open(remote_name, 'w+') as f:
                     f.set_pipelined(pipelined=True)
                     while True:
                         chunk=r.raw.read(1024 * 1000)
