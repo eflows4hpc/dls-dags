@@ -45,6 +45,8 @@ def transfer_image():
                 print("Forcing overwrite")
 
             ssh_client.exec_command(command=f"mkdir -p {target}")
+            ssh_client.exec_command(command=f"touch {remote_name}")
+
             
             with requests.get(url, stream=True, verify=False) as r:
                 with sftp_client.open(remote_name, 'w+') as f:
