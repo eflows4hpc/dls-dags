@@ -4,9 +4,15 @@ from airflow.utils.dates import days_ago
 from airflow.models.connection import Connection
 from airflow.models import Variable
 from airflow.operators.python import get_current_context
+
+from datacat_integration.hooks import DataCatalogHook
+from datacat_integration.connection import DataCatalogEntry
+from pydantic import DataclassTypeError
+
 from b2shareoperator import (download_file, get_file_list, get_object_md,
-                             get_objects, get_record_template, create_draft_record, add_file, submit_draft)
+                             get_record_template, create_draft_record, add_file, submit_draft)
 from decors import get_connection
+from justreg import get_parameter
 import docker_cmd as doc
 from docker_cmd import WORKER_DATA_LOCATION
 import os
@@ -32,43 +38,48 @@ default_args = {
 @dag(default_args=default_args, schedule_interval=None, start_date=days_ago(2), tags=['example', 'docker'])
 def docker_in_worker():
     DW_CONNECTION_ID = "docker_worker"
-    
-    @task(multiple_outputs=True)
-    def extract(**kwargs):
-        """
-        #### Extract task
-        A simple Extract task to get data ready for the rest of the data
-        pipeline. In this case, getting data is simulated by reading from a
-        b2share connection.
-        :param oid: ID of the file to be extracted
-        """
-        connection = Connection.get_connection_from_secrets('default_b2share')
-        server = connection.get_uri()
-        print(f"Rereiving data from {server}")
 
+
+    @task(multiple_output=True)
+    def stagein(**kwargs):
+        """ stage in task
+        This task gets the 'datacat_oid' or 'oid' from the DAG params to retreive a connection from it (b2share for now).
+        It then downloads all data from the b2share entry to the local disk, and returns a mapping of these files to the local download location,
+        which can be used by the following tasks.
+        """
         params = kwargs['params']
+        datacat_hook = DataCatalogHook()
+        
         if 'oid' not in params:  # {"oid": "b143bf73efd24d149bba4c081964b459"}
-            print("Missing object id in pipeline parameters")
-            lst = get_objects(server=server)
-            flist = {o['id']: [f['key'] for f in o['files']] for o in lst}
-            print(f"Objects on server: {flist}")
-            return -1  # non zero exit code is a task failure
+            if 'datacat_oid' not in params:
+                print("Missing object id in pipeline parameters")
+                return -1  # non zero exit code is a task failure
+            else:
+                params['oid'] = params['datacat_oid']
+        oid_split = params['oid'].split("/")
+        type = 'dataset'
+        oid = 'placeholder_text'
+        if len(oid_split) is 2:
+            type = oid_split[0]
+            oid = oid_split[1]
+        elif len(oid_split) is 1:
+            oid = oid_split[0]
+        else:
+            print("Malformed oid passed as parameter.")
+            return -1
 
-        oid = params['oid']
+        entry = DataCatalogEntry.from_json(datacat_hook.get_entry(type, oid))
 
-        obj = get_object_md(server=server, oid=oid)
+        print(f"using entry: {entry}")
+        b2share_server_uri = entry.url
+        # TODO general stage in based on type metadata
+        # using only b2share for now
+        b2share_oid = entry.metadata['b2share_oid']
+
+        obj = get_object_md(server=b2share_server_uri, oid=b2share_oid)
         print(f"Retrieved object {oid}: {obj}")
         flist = get_file_list(obj)
-
-        return flist
-    
-    @task(multiple_outputs=True)
-    def transform(flist: dict):
-        """
-        #### Transform task
-        A Transform task which takes in the collection of data, retrieved from the connection, downloads the files 
-        and returns a map of the filename with the corresponding filepath.
-        """
+        
         name_mappings = {}
         tmp_dir = Variable.get("working_dir", default_var='/tmp/')
         print(f"Local working dir is: {tmp_dir}")
@@ -242,20 +253,47 @@ def docker_in_worker():
             print(f"Deleting file: {f}")
             os.remove(f)
             #delete local copies of file
-            
-        
     
-    data = extract()
-    files = transform(data)
+    @task()
+    def register(object_url, additional_metadata = {}, **kwargs):
+        reg = get_parameter(parameter='register', default=False, **kwargs)
+        if not reg:
+            print("Skipping registration as 'register' parameter is not set")
+            return 0
+
+        hook = DataCatalogHook()
+        print("Connected to datacat via hook")
+
+        if not additional_metadata['author']:
+            additional_metadata['author'] = "DLS on behalft of eFlows"
+        
+        if not additional_metadata['access']:
+            additional_metadata['access'] = "hook-based"
+    
+        entry = DataCatalogEntry(name=f"DLS results {kwargs['run_id']}",
+                                 url=object_url,
+                                 metadata=additional_metadata
+                                )
+        try:
+            r = hook.create_entry(datacat_type='dataset', entry=entry)
+            print("Hook registration returned: ", r)
+            return f"{hook.base_url}/dataset/{r}" 
+        except ConnectionError as e:
+            print('Registration failed', e)
+            return -1
+            
+
+    files = stagein()
     data_locations = load(files)
     output_fnames = run_container(data_locations)
     ls_results(output_fnames)
     res_fpaths = retrieve_res(output_fnames)
     cleanup_doc_worker(res_fpaths)
-    errcode = stageout_results(res_fpaths)
-    cleanup_local(errcode, res_fpaths)
+    url_or_errcode = stageout_results(res_fpaths)
+    cleanup_local(url_or_errcode, res_fpaths)
+    register(url_or_errcode)
 
-    # data >> files >> data_locations >> output_fnames >> ls_results(output_fnames) >> files >> stageout_results(files) >> cleanup()
+    # files >> data_locations >> output_fnames >> ls_results(output_fnames) >> files >> stageout_results(files) >> cleanup()
     
 dag = docker_in_worker()
 
