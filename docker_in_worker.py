@@ -275,18 +275,19 @@ def docker_in_worker():
 
     @task()
     def register(object_url, additional_metadata = {}, **kwargs):
-        reg = kwargs['params']['register']
-        if not reg or reg is not "True":
+        params = kwargs['params']
+        reg = params.get('register', False)
+        if not reg:
             print("Skipping registration as 'register' parameter is not set")
             return 0
 
         hook = DataCatalogHook()
         print("Connected to datacat via hook")
 
-        if not additional_metadata['author']:
+        if not additional_metadata.get('author', False):
             additional_metadata['author'] = "DLS on behalft of eFlows"
         
-        if not additional_metadata['access']:
+        if not additional_metadata.get('access', False):
             additional_metadata['access'] = "hook-based"
     
         entry = DataCatalogEntry(name=f"DLS results {kwargs['run_id']}",
