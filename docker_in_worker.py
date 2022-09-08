@@ -18,22 +18,26 @@ import uuid
 
 """This piplines is a test case for starting a clusterting algorithm with HeAT, running in a Docker environment.
 A test set of parameters with a HeAT example:
-With data from b2Share: {"oid": "b143bf73efd24d149bba4c081964b459", "image": "ghcr.io/helmholtz-analytics/heat:1.1.1-alpha", "entrypoint": "/bin/bash", "command": "python demo_knn.py iris.h5 result.out"}
-With data from b2Share: {"oid": "b143bf73efd24d149bba4c081964b459", "image":"hello-world", "register":"True"}
+Data Catalog Integration example: {"oid": "e13bcab6-3664-4090-bebb-defdb58483e0", "image": "ghcr.io/helmholtz-analytics/heat:1.1.1-alpha", "entrypoint": "/bin/bash", "command": "python demo_knn.py iris.h5 result.out"}
 Data Catalog Integration example: {"oid": "e13bcab6-3664-4090-bebb-defdb58483e0", "image":"hello-world", "register":"True"} 
 Params:
     oid (str): oid of the data (e.g, from data catalog)
     image (str): a docker contianer image
-    job_args (str): a string of further arguments which might be needed for the task execution
-    entrypoint (str): you can specify or overwrite the docker entrypoint
-    command (str): you can specify or override the command to be executed
-    args_to_dockerrun (str): docker run additional options
+    job_args (str): 
+        Optional: a string of further arguments which might be needed for the task execution
+    entrypoint (str):
+        Optional: you can specify or overwrite the docker entrypoint
+    command (str):
+        Optional: you can specify or override the command to be executed
+    args_to_dockerrun (str):
+        Optional: docker run additional arguments
+    register (True, False):
+        Optional, default is False: register the resulsts in the data catalog
 """
 
 default_args = {
     'owner': 'airflow',
 }
-input_fnames = []
 
 @dag(default_args=default_args, schedule_interval=None, start_date=days_ago(2), tags=['example', 'docker', 'datacat'])
 def docker_in_worker():
@@ -115,17 +119,8 @@ def docker_in_worker():
                 print(
                     f"Copying {local} --> {DW_CONNECTION_ID}:{os.path.join(target_dir, truename)}")
                 sftp_client.put(local, os.path.join(target_dir, truename))
-                input_fnames.append(truename)
                 # or separate cleanup task?
                 os.unlink(local)
-
-        # loaded_files = []
-        # for [truename, local_path] in files.items():
-            
-        #     destination = shutil.copy(local_path, os.path.join(DATA_LOCATION, truename))
-        #     print(f"Copying {local_path} --> copying to: {destination};")
-        #     loaded_files.append(destination)
-        # os.unlink(local_path)
 
         return target_dir
 
@@ -134,12 +129,15 @@ def docker_in_worker():
         """A task which runs in the docker worker and spins up a docker container with the an image and giver parameters.
 
         Args:
-            image(str): contianer image
-            stageout_args (list): a list of files which are results from the execution
-            job_args (str): a string of further arguments which might be needed for the task execution
-            entrypoint (str): specify or overwrite the docker entrypoint
-            command(str): you can specify or override the command to be executed
-            args_to_dockerrun(str): docker options
+            image (str): a docker contianer image
+            job_args (str): 
+                Optional: a string of further arguments which might be needed for the task execution
+            entrypoint (str):
+                Optional: you can specify or overwrite the docker entrypoint
+            command (str):
+                Optional: you can specify or override the command to be executed
+            args_to_dockerrun (str):
+                Optional: docker run additional arguments
         """    
         params = kwargs['params']
         # stageout_fnames = params.get('stageout_args', []) 
@@ -177,7 +175,7 @@ def docker_in_worker():
         process.execute(context)    
     
     @task()
-    def retrieve_res(output_dir: str, **kwargs):
+    def retrieve_res(output_dir: str, input_files: dict, **kwargs):
         """This task copies the data from the remote docker worker back to airflow workspace
 
         Args:
@@ -194,7 +192,7 @@ def docker_in_worker():
             sftp_client = ssh_client.open_sftp()
             
             for fname in sftp_client.listdir(output_dir):
-                if fname not in input_fnames:
+                if fname not in input_files.keys():
                     l = os.path.join(local_tmp_dir, fname)
                     print(f"Copying {os.path.join(output_dir, fname)} to {l}")
                     sftp_client.get(os.path.join(output_dir, fname), l)
@@ -206,8 +204,8 @@ def docker_in_worker():
     def cleanup_doc_worker(res_fpaths_local, data_on_worker, **kwargs):
         """This task deletes all the files from the docker worker
 
-        # Args:
-        #     fnames (list): the result files to be deleted on the docker worker  
+          Args:
+              res_fpaths_local: used only to define the order of tasks within the DAG  
               data_on_worker (str): delete the folder with the user data from the docker worker
         """
 
@@ -227,6 +225,13 @@ def docker_in_worker():
                 
     @task
     def stageout_results(output_files: list):
+        """This task transfers the output files to b2share
+
+        Args:
+            output_files: the output files to be submitted to the remote storage  
+        Returns:
+            a b2share record
+        """
         if not output_files:
             print("No output to stage out. Nothing more to do.")
             return -1
@@ -275,6 +280,12 @@ def docker_in_worker():
 
     @task()
     def register(object_url, additional_metadata = {}, **kwargs):
+        """This task registers the b2share record into the data catalog
+
+        Args:
+            object_url: from b2share
+            additional_metadata 
+        """
         params = kwargs['params']
         reg = params.get('register', False)
         if not reg:
@@ -302,11 +313,11 @@ def docker_in_worker():
             print('Registration failed', e)
             return -1
             
-    files = stagein()
-    data_location = move_to_docker_host(files)
+    input_files = stagein()
+    data_location = move_to_docker_host(input_files)
     data_on_worker = run_container(data_location)
     ls_results(data_on_worker)
-    res_fpaths = retrieve_res(data_on_worker)
+    res_fpaths = retrieve_res(data_on_worker, input_files)
     cleanup_doc_worker(res_fpaths, data_on_worker)
     url_or_errcode = stageout_results(res_fpaths)
     cleanup_local(url_or_errcode, res_fpaths)
