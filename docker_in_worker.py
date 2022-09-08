@@ -7,12 +7,10 @@ from airflow.operators.python import get_current_context
 
 from datacat_integration.hooks import DataCatalogHook
 from datacat_integration.connection import DataCatalogEntry
-from pydantic import DataclassTypeError
 
 from b2shareoperator import (download_file, get_file_list, get_object_md,
                              get_record_template, create_draft_record, add_file, submit_draft)
 from decors import get_connection
-from justreg import get_parameter
 import docker_cmd as doc
 from docker_cmd import WORKER_DATA_LOCATION
 import os
@@ -40,7 +38,7 @@ def docker_in_worker():
     DW_CONNECTION_ID = "docker_worker"
 
 
-    @task(multiple_output=True)
+    @task()
     def stagein(**kwargs):
         """ stage in task
         This task gets the 'datacat_oid' or 'oid' from the DAG params to retreive a connection from it (b2share for now).
@@ -256,8 +254,8 @@ def docker_in_worker():
     
     @task()
     def register(object_url, additional_metadata = {}, **kwargs):
-        reg = get_parameter(parameter='register', default=False, **kwargs)
-        if not reg:
+        reg = kwargs['params']['register']
+        if not reg or reg is not "True":
             print("Skipping registration as 'register' parameter is not set")
             return 0
 
