@@ -20,10 +20,11 @@ import uuid
 
 """This piplines is a test case for starting a clusterting algorithm with HeAT, running in a Docker environment.
 A test set of parameters with a HeAT example:
-{"oid": "b143bf73efd24d149bba4c081964b459", "image": "ghcr.io/helmholtz-analytics/heat:1.1.1-alpha", "entrypoint": "/bin/bash", "command": "python demo_knn.py iris.h5 result.out"}
-{"oid": "b143bf73efd24d149bba4c081964b459", "image":"hello-world"}
+With data from b2Share: {"oid": "b143bf73efd24d149bba4c081964b459", "image": "ghcr.io/helmholtz-analytics/heat:1.1.1-alpha", "entrypoint": "/bin/bash", "command": "python demo_knn.py iris.h5 result.out"}
+With data from b2Share: {"oid": "b143bf73efd24d149bba4c081964b459", "image":"hello-world", "register":"True"}
+Data Catalog Integration example: {"oid": "e13bcab6-3664-4090-bebb-defdb58483e0", "image":"hello-world", "register":"True"} 
 Params:
-    oid (str): oid of the data
+    oid (str): oid of the data (e.g, from data catalog)
     image (str): a docker contianer image
     job_args (str): a string of further arguments which might be needed for the task execution
     entrypoint (str): you can specify or overwrite the docker entrypoint
@@ -218,9 +219,11 @@ def docker_in_worker():
         with ssh_hook.get_conn() as ssh_client:
             sftp_client = ssh_client.open_sftp()
             d = os.path.join(WORKER_DATA_LOCATION, data_on_worker)
-            print(f"Deleting directory {DW_CONNECTION_ID}:{d}")
+           
             for f in sftp_client.listdir(d):
-                sftp_client.remove(f)
+                print(f"Deleting file {f}")
+                sftp_client.remove(os.path.join(d, f))
+            print(f"Deleting directory {DW_CONNECTION_ID}:{d}")
             sftp_client.rmdir(d)
         
                 
