@@ -15,10 +15,11 @@ import docker_cmd as doc
 from docker_cmd import WORKER_DATA_LOCATION
 import os
 import uuid
+import tempfile
 
 """This piplines is a test case for starting a clusterting algorithm with HeAT, running in a Docker environment.
 A test set of parameters with a HeAT example:
-Data Catalog Integration example: {"oid": "e13bcab6-3664-4090-bebb-defdb58483e0", "image": "ghcr.io/helmholtz-analytics/heat:1.1.1-alpha", "entrypoint": "/bin/bash", "command": "python demo_knn.py iris.h5 result.out"}
+Data Catalog Integration example: {"oid": "e13bcab6-3664-4090-bebb-defdb58483e0", "image": "ghcr.io/helmholtz-analytics/heat:1.1.1-alpha", "entrypoint": "/bin/bash", "command": "python demo_knn.py iris.h5 calc_res.txt", "register":"True"}
 Data Catalog Integration example: {"oid": "e13bcab6-3664-4090-bebb-defdb58483e0", "image":"hello-world", "register":"True"} 
 Params:
     oid (str): oid of the data (e.g, from data catalog)
@@ -140,7 +141,6 @@ def docker_in_worker():
                 Optional: docker run additional arguments
         """    
         params = kwargs['params']
-        # stageout_fnames = params.get('stageout_args', []) 
         
         cmd = doc.get_dockercmd(params, data_location)
         print(f"Executing docker command {cmd}")
@@ -183,8 +183,8 @@ def docker_in_worker():
         Returns:
             local_fpath (list): the path of the files copied back to the airflow host
         """
-        local_tmp_dir = Variable.get("working_dir", default_var='/tmp/') #str(uuid.uuid4())
-        local_fpath = []
+        working_dir = Variable.get("working_dir", default_var='/tmp/')
+        name_mappings = {}
         print(f"Using {DW_CONNECTION_ID} connection")
         ssh_hook = get_connection(conn_id=DW_CONNECTION_ID)
 
@@ -193,19 +193,21 @@ def docker_in_worker():
             
             for fname in sftp_client.listdir(output_dir):
                 if fname not in input_files.keys():
-                    l = os.path.join(local_tmp_dir, fname)
-                    print(f"Copying {os.path.join(output_dir, fname)} to {l}")
-                    sftp_client.get(os.path.join(output_dir, fname), l)
-                    local_fpath.append(l)
+                    
+                    tmpname = tempfile.mktemp(dir=working_dir)
+                    local = os.path.join(working_dir, tmpname)
+                    print(f"Copying {os.path.join(output_dir, fname)} to {local}")
+                    sftp_client.get(os.path.join(output_dir, fname), local)
+                    name_mappings[fname] = local
         
-        return local_fpath
+        return name_mappings
     
     @task()
     def cleanup_doc_worker(res_fpaths_local, data_on_worker, **kwargs):
         """This task deletes all the files from the docker worker
 
           Args:
-              res_fpaths_local: used only to define the order of tasks within the DAG  
+              res_fpaths_local: used only to define the order of tasks within the DAG, i.e. wait for previos task to complete before cleaning the worker space  
               data_on_worker (str): delete the folder with the user data from the docker worker
         """
 
@@ -224,15 +226,15 @@ def docker_in_worker():
         
                 
     @task
-    def stageout_results(output_files: list):
+    def stageout_results(output_mappings: dict):
         """This task transfers the output files to b2share
 
         Args:
-            output_files: the output files to be submitted to the remote storage  
+            output_mappings (dict): {true_filename, local_path} a dictionary of the output files to be submitted to the remote storage, e.g., b2share 
         Returns:
             a b2share record
         """
-        if not output_files:
+        if not output_mappings:
             print("No output to stage out. Nothing more to do.")
             return -1
         connection = Connection.get_connection_from_secrets('default_b2share')
@@ -252,31 +254,19 @@ def docker_in_worker():
             print('Something went wrong with registration', r, r.text)
             return -1
         
-        for f in output_files:
-            print(f"Uploading {f}")
-            _ = add_file(record=r, fname=f, token=token, remote=f)
+        for [truename, local] in output_mappings.items():
+            print(f"Uploading {truename}")
+            _ = add_file(record=r, fname=local, token=token, remote=truename)
             # delete local
-            # os.unlink(local)
+            os.unlink(local)
         
         print("Submitting record for pubication")
         submitted = submit_draft(record=r, token=token)
         print(f"Record created {submitted}")
 
         return submitted['links']['publication']
-        # context = get_current_context()
-        # process.execute(context)    
+   
         
-    #TODO a cleanup job
-    @task
-    def cleanup_local(errcode, res_fpaths):
-        if type(errcode) == int:
-            print("The data could not be staged out in the repository. Cleaning up")
-
-        for f in res_fpaths:
-            print(f"Deleting file: {f}")
-            os.remove(f)
-            #delete local copies of file
-    
 
     @task()
     def register(object_url, additional_metadata = {}, **kwargs):
@@ -320,7 +310,6 @@ def docker_in_worker():
     res_fpaths = retrieve_res(data_on_worker, input_files)
     cleanup_doc_worker(res_fpaths, data_on_worker)
     url_or_errcode = stageout_results(res_fpaths)
-    cleanup_local(url_or_errcode, res_fpaths)
     register(url_or_errcode)
 
     # files >> data_locations >> output_fnames >> ls_results(output_fnames) >> files >> stageout_results(files) >> cleanup()
