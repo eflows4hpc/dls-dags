@@ -1,0 +1,7 @@
+**__pycache__/
+.vscode/*
+*.pyc
+.env
+
+# contains data for local tests
+.coverage
