@@ -4,7 +4,6 @@ import requests
 from airflow.decorators import dag, task
 from airflow.utils.dates import days_ago
 from airflow.operators.python import PythonOperator
-from uploadflow import copy_streams
 
 from decors import setup, get_connection, remove
 
