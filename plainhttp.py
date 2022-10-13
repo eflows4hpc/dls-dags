@@ -22,6 +22,7 @@ def plainhttp2ssh():
         url = params.get('url', '')
         if not url:
             print('Provide valid url')
+            return -1
 
         print(f"Putting {url} --> {target}")
         ssh_hook = get_connection(conn_id=connection_id, **kwargs)

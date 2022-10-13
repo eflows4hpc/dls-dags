@@ -1,10 +1,13 @@
+import json
 import os
 from io import BytesIO
+from urllib.parse import urlparse
 
 from airflow.decorators import dag, task
 from airflow.models.connection import Connection
 from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
+from datacat_integration.hooks import DataCatalogHook
 from webdav3.client import Client
 
 from decors import get_connection, remove, setup
@@ -15,7 +18,8 @@ default_args = {
 }
 
 
-def get_webdav_client(connection):
+def get_webdav_client(webdav_connid):
+    connection = Connection.get_connection_from_secrets(webdav_connid)
     options = {
         'webdav_hostname': f"https://{connection.host}{connection.schema}",
         'webdav_login': connection.login,
@@ -58,37 +62,39 @@ def walk_webdav(client, prefix, path):
         yield curr_name
 
 
-@dag(default_args=default_args, schedule_interval=None, start_date=days_ago(2), tags=['example'])
+@dag(default_args=default_args, schedule_interval=None, start_date=days_ago(2), tags=['wp6', 'UCIS4EQ'])
 def webdav_stagein():
 
-    @task(multiple_outputs=True)
-    def get_prefix(**kwargs):
-        conn = Connection.get_connection_from_secrets('b2drop_webdav')
-        client = get_webdav_client(connection=conn)
+    @task()
+    def load(connection_id, **kwargs):
+        params = kwargs['params']
+        target = params.get('target', '/tmp/')
 
-        dirname = 'airflow-tests/'
+        if 'oid' not in params: 
+            print("Missing object id in pipeline parameters. Please provide  datacat id")
+            return -1
+        oid = params['oid'] #oid = 'd011b12b-4eca-4482-8425-8c410b349519'
 
+        hook = DataCatalogHook()
+        try:
+            entry = json.loads(hook.get_entry('dataset', oid))
+            webdav_connid = urlparse(entry['url']).netloc
+            print("Will be using webdav connection", webdav_connid)
+            dirname = entry['metadata']['path']
+            print(f"Processing webdav dir: {dirname}")
+        except:
+            print(f"No entry {oid} in data cat found. Or entry invalid")
+            return -1
+        
+        client = get_webdav_client(webdav_connid=webdav_connid)
         prefix = get_webdav_prefix(client=client, dirname=dirname)
         if not prefix:
             print('Unable to determine common prefix, quitting')
             return -1
-
         print(f"Determined common prefix: {prefix}")
-
-        return prefix
-
-    @task()
-    def load(connection_id, prefix, **kwargs):
-        dirname = 'airflow-tests/'
-        print(f"Processing: {dirname}")
-        params = kwargs['params']
-        target = params.get('target', '/tmp/')
-
-        print(f"Using {connection_id} connection")
+        
+        print(f"Using ssh {connection_id} connection")
         ssh_hook = get_connection(conn_id=connection_id, **kwargs)
-
-        conn = Connection.get_connection_from_secrets('b2drop_webdav')
-        client = get_webdav_client(connection=conn)
 
         with ssh_hook.get_conn() as ssh_client:
             sftp_client = ssh_client.open_sftp()
@@ -117,13 +123,12 @@ def webdav_stagein():
     conn_id = PythonOperator(python_callable=setup, task_id='setup_connection')
     a_id = conn_id.output['return_value']
 
-    prefix = get_prefix()
-    ucid = load(connection_id=a_id, prefix=prefix)
+    ucid = load(connection_id=a_id)
 
     en = PythonOperator(python_callable=remove, op_kwargs={
                         'conn_id': ucid}, task_id='cleanup')
 
-    conn_id >> prefix >> ucid >> en
+    conn_id >> ucid >> en
 
 
 dag = webdav_stagein()
