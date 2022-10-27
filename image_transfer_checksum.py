@@ -91,17 +91,39 @@ def test_checksum():
                     print(f"The calculated checksum after the transfer is: {checksum_after}")
                     if checksum_before.strip() != checksum_after.strip():
                         raise ValueError(f'The file transfer was incomplete. Checksum mismatch')
+        
+        return [remote_name]
             
+    @task
+    def get_checksum_list(connection_id, remote_files:list, **kwargs):
+        checksums = dict()
 
-                    
+        ssh_hook = get_connection(conn_id=connection_id, **kwargs)
+        with ssh_hook.get_conn() as ssh_client:
+            for remote_path in remote_files:
+                stdin, stdout, stderr = ssh_client.exec_command(f'sha256sum {remote_path}')
+                check = stdout.read()
+                check = check.split()[0]
+                checksums[remote_path] = str(check, 'UTF-8')
+        return checksums
+
+    
+    @task
+    def do_something_here(checksums: dict):
+        print(checksums)
+
     setup_task = PythonOperator(
         python_callable=setup, task_id='setup_connection')
     a_id = setup_task.output['return_value']
-    
+
     cleanup_task = PythonOperator(python_callable=remove, op_kwargs={
                                   'conn_id': a_id}, task_id='cleanup')
+   
 
-    setup_task >> stream_upload(connection_id=a_id) >> cleanup_task
-
+    # setup_task >> stream_upload(connection_id=a_id) >> cleanup_task
+    files = stream_upload(connection_id=a_id)
+    checksums = get_checksum_list(connection_id=a_id, remote_files=files)
+    compare = do_something_here(checksums)
+    setup_task >> files >> checksums >> compare >> cleanup_task
 
 dag = test_checksum()
