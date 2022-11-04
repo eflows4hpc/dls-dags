@@ -1,5 +1,4 @@
-import imp
-import tempfile
+
 import unittest
 from unittest.mock import MagicMock, patch
 from image_transfer import http2ssh
