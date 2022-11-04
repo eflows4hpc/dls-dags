@@ -70,7 +70,7 @@ def webdav_stagein():
         params = kwargs['params']
         target = params.get('target', '/tmp/')
 
-        if 'oid' not in params: 
+        if 'oid' not in params:
             print("Missing object id in pipeline parameters. Please provide  datacat id")
             return -1
         oid = params['oid'] #oid = 'd011b12b-4eca-4482-8425-8c410b349519'
@@ -85,14 +85,14 @@ def webdav_stagein():
         except:
             print(f"No entry {oid} in data cat found. Or entry invalid")
             return -1
-        
+
         client = get_webdav_client(webdav_connid=webdav_connid)
         prefix = get_webdav_prefix(client=client, dirname=dirname)
         if not prefix:
             print('Unable to determine common prefix, quitting')
             return -1
         print(f"Determined common prefix: {prefix}")
-        
+
         print(f"Using ssh {connection_id} connection")
         ssh_hook = get_connection(conn_id=connection_id, **kwargs)
 
