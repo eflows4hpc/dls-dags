@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 
-from webdav_stagein import get_webdav_prefix, walk_dir
+from webdav_stagein import LFSC, get_webdav_prefix, walk_dir
 
 
 class TestWebDAV(unittest.TestCase):
@@ -68,3 +68,8 @@ class TestWebDAV(unittest.TestCase):
             client=client, prefix='/remote.php/webdav/', path='airflow-tests/'))
         print('flist', flist)
         self.assertEqual(len(flist), 2)
+
+    def test_walk_local(self):
+        local_client = LFSC()
+        lst = walk_dir(client=local_client, prefix='', path='/tmp/')
+        self.assertIsNotNone(lst)

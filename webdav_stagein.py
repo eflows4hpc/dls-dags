@@ -62,6 +62,14 @@ def walk_dir(client, path, prefix):
         yield curr_name
 
 
+class LFSC(object):
+    def list(self, path, get_info=True):
+        lst = [os.path.realpath(os.path.join(path, el)) for el in os.listdir(path)]
+        if not get_info:
+            return lst
+        return [{'path': el, 'isdir':os.path.isdir(el) } for el in lst]
+
+
 @dag(default_args=default_args, schedule_interval=None, start_date=days_ago(2), tags=['wp6', 'UCIS4EQ'])
 def webdav_stagein():
 
