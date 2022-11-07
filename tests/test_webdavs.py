@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 
-from webdav_stagein import get_webdav_prefix, walk_webdav
+from webdav_stagein import get_webdav_prefix, walk_dir
 
 
 class TestWebDAV(unittest.TestCase):
@@ -64,7 +64,7 @@ class TestWebDAV(unittest.TestCase):
                 'path': '/remote.php/webdav/airflow-tests/file1.txt'}
         ])
 
-        flist = list(walk_webdav(
+        flist = list(walk_dir(
             client=client, prefix='/remote.php/webdav/', path='airflow-tests/'))
         print('flist', flist)
         self.assertEqual(len(flist), 2)

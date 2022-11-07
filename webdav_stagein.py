@@ -46,7 +46,7 @@ def get_webdav_prefix(client, dirname):
     return prefix
 
 
-def walk_webdav(client, prefix, path):
+def walk_dir(client, path, prefix):
     for p in client.list(path, get_info=True):
         curr_name = p['path']
         if curr_name.startswith(prefix):
@@ -57,7 +57,7 @@ def walk_webdav(client, prefix, path):
 
         # will skip empty directories but we can live with that?
         if p['isdir']:
-            yield from walk_webdav(client, prefix, curr_name)
+            yield from walk_dir(client, curr_name, prefix)
             continue
         yield curr_name
 
@@ -100,7 +100,7 @@ def webdav_stagein():
             sftp_client = ssh_client.open_sftp()
             # check dir?
             ssh_client.exec_command(command=f"mkdir -p {target}")
-            for fname in walk_webdav(client=client, prefix=prefix, path=dirname):
+            for fname in walk_dir(client=client, prefix=prefix, path=dirname):
                 print(f"Processing {fname}")
                 target_path = os.path.join(target, fname)
                 dirname = os.path.dirname(target_path)
