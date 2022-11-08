@@ -12,6 +12,7 @@ from webdav3.client import Client
 
 from decors import get_connection, remove, setup
 from uploadflow import copy_streams
+import stat
 
 default_args = {
     'owner': 'airflow',
@@ -69,6 +70,14 @@ class LFSC(object):
             return lst
         return [{'path': el, 'isdir':os.path.isdir(el) } for el in lst]
 
+class RFSC(object):
+    def __init__(self, client, **kwargs):
+        self.client = client
+        
+    def list(self, path, get_info=True):
+        if not get_info:
+            return [el.filename for el in self.client.listdir_attr(path)]
+        return [{'path': os.path.join(path, el.filename), 'isdir':stat.S_ISDIR(el.st_mode) } for el in self.client.listdir_attr(path)]
 
 @dag(default_args=default_args, schedule_interval=None, start_date=days_ago(2), tags=['wp6', 'UCIS4EQ'])
 def webdav_stagein():

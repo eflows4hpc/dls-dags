@@ -1,8 +1,12 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 
-from webdav_stagein import LFSC, get_webdav_prefix, walk_dir
+from webdav_stagein import LFSC, RFSC, get_webdav_prefix, walk_dir
+from unittest.mock import create_autospec
+from paramiko.sftp_client import SFTPClient
+from collections import namedtuple
 
+Entry = namedtuple('Entry', ['st_mode', 'filename' ])
 
 class TestWebDAV(unittest.TestCase):
 
@@ -73,3 +77,13 @@ class TestWebDAV(unittest.TestCase):
         local_client = LFSC()
         lst = walk_dir(client=local_client, prefix='', path='/tmp/')
         self.assertIsNotNone(lst)
+
+    def test_walk_remote(self):
+        sftp_client = create_autospec(SFTPClient)
+        sftp_client.listdir_attr.return_value = [
+            Entry(st_mode=0, filename='afile'),
+            Entry(st_mode=1, filename='foo')
+        ]
+        remote_client = RFSC(sftp_client)
+        lst = list(walk_dir(client=remote_client, prefix='', path='/tmp/'))
+        self.assertEqual(len(lst),2)
