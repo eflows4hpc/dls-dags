@@ -80,10 +80,21 @@ class TestWebDAV(unittest.TestCase):
 
     def test_walk_remote(self):
         sftp_client = create_autospec(SFTPClient)
-        sftp_client.listdir_attr.return_value = [
-            Entry(st_mode=0, filename='afile'),
-            Entry(st_mode=1, filename='foo')
-        ]
+        sftp_client.listdir_attr = MagicMock(side_effect= [
+            [
+                Entry(st_mode=0o40700, filename='afile'),
+                Entry(st_mode=1, filename='foo')
+            ],
+            [
+                Entry(st_mode=0, filename='barafile'),
+                Entry(st_mode=1, filename='barfoo')
+                
+            ]
+
+        ])
+
         remote_client = RFSC(sftp_client)
         lst = list(walk_dir(client=remote_client, prefix='', path='/tmp/'))
-        self.assertEqual(len(lst),2)
+        print(lst)
+        self.assertEqual(len(lst),3)
+        self.assertListEqual(['/tmp/afile/barafile', '/tmp/afile/barfoo', '/tmp/foo'], lst)
