@@ -1,6 +1,6 @@
 
 import unittest
-from unittest.mock import MagicMock, Mock, patch, create_autospec
+from unittest.mock import create_autospec
 from model_transfer import transfer_model
 from mlflow.client import MlflowClient
 from collections import namedtuple
