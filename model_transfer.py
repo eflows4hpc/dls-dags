@@ -7,6 +7,8 @@ from airflow.models import Variable
 from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 from mlflow.client import MlflowClient
+from airflow.models.connection import Connection
+from airflow.exceptions import AirflowNotFoundException
 
 from decors import get_connection, remove, setup
 from uploadflow import ssh_download
@@ -80,8 +82,7 @@ def mlflow_model_transfer():
     @task()
     def load(connection_id, **kwargs):
         params = kwargs['params']
-        target = os.path.join(Variable.get(
-            "working_dir", default_var='/tmp/'), 'mlruns')
+        target = os.path.join(Variable.get("working_dir", default_var='/tmp/'), 'mlruns')
         source = os.path.join(params.get('source', '/tmp/'), 'mlruns')
 
         ssh_hook = get_connection(conn_id=connection_id, **kwargs)
@@ -97,7 +98,7 @@ def mlflow_model_transfer():
             os.makedirs(di, exist_ok=True)
 
             #sftp_client.get(remotepath=fname, localpath=localname)
-            ssh_download(sftp_client=sftp_client, remote=source, local=target)
+            ssh_download(sftp_client=sftp_client, remote=fname, local=localname)
         return target
 
     @task
@@ -130,24 +131,31 @@ def mlflow_model_transfer():
 
     @task()
     def register_local2remote(location, **kwargs):
+        try:
+            connection = Connection.get_connection_from_secrets('my_mlflow')
+        except AirflowNotFoundException as e:
+            print("Please define the mlflow connection 'my_mlflow'")
+            return -1
+
+        mlflow_url = f"http://{connection.host}:{connection.port}"
+        print("Will be using remote mlflow @", mlflow_url)
         local_client = MlflowClient(
             tracking_uri=location, registry_uri=location)
         remote_client = MlflowClient(
-            tracking_uri='http://localhost:5000', registry_uri='http://localhost:5000')
+            tracking_uri=mlflow_url, registry_uri=mlflow_url)
         transfer_model(local_client=local_client, remote_client=remote_client)
 
-    setup_task = PythonOperator(
-        python_callable=setup, task_id='setup_connection')
-    a_id = setup_task.output['return_value']
+    setup_task = PythonOperator(python_callable=setup, task_id='setup_connection')
+    a_id =  setup_task.output['return_value']
+    
+    location = load(connection_id=a_id)
+    converted = convert_artifact_locations(location=location)
+    
+
     cleanup_task = PythonOperator(python_callable=remove, op_kwargs={
                                   'conn_id': a_id}, task_id='cleanup')
 
-    location = load(connection_id=a_id)
-
-    converted = convert_artifact_locations(location=location)
-    register_local2remote(location=converted)
-
-    setup_task >> location >> cleanup_task
+    setup_task >> location >> converted >> register_local2remote(location=converted) >> cleanup_task
 
 
 dag = mlflow_model_transfer()
