@@ -6,13 +6,17 @@ from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
-from mlflow.client import MlflowClient
 from airflow.models.connection import Connection
 from airflow.exceptions import AirflowNotFoundException
 
 from decors import get_connection, remove, setup
 from uploadflow import ssh_download
 from webdav_stagein import LFSC, RFSC, walk_dir
+
+try:
+    from mlflow.client import MlflowClient
+except ImportError:
+    print("Unable to import mlflow")
 
 default_args = {
     'owner': 'airflow',

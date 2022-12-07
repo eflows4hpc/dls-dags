@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock
 
 from webdav_stagein import LFSC, RFSC, get_webdav_prefix, walk_dir
 from unittest.mock import create_autospec
