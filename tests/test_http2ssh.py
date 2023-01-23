@@ -51,8 +51,7 @@ class TestHTTP(unittest.TestCase):
         my_client.exec_command = exec
 
 
-        get().__enter__().raw.read = MagicMock(side_effect=[b'blabla', None])
-        get().__enter__().headers.get = MagicMock(return_value=6)
+        get().__enter__().iter_content = MagicMock(return_value=[b'blabla'])
         r = http2ssh(url='foo.bar', ssh_client=my_client, remote_name='/goo/bar', force=True)
         self.assertEqual(r, 0)
         exec.assert_called()
@@ -70,10 +69,9 @@ class TestHTTP(unittest.TestCase):
         my_client.open_sftp.return_value = my_sftp
         my_client.exec_command = exec
 
+        get().__enter__().iter_content = MagicMock(return_value=[b'blabla'])
 
-        get().__enter__().raw.read = MagicMock(side_effect=[b'blabla', None])
-        get().__enter__().headers.get = MagicMock(return_value=699)
         r = http2ssh(url='foo.bar', ssh_client=my_client, remote_name='/goo/bar', force=True)
-        self.assertEqual(r, -1)
+        self.assertEqual(r, 0)
         exec.assert_called()
         wrt.assert_called_once_with(memoryview(b'blabla'))

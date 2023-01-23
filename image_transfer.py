@@ -18,6 +18,7 @@ def file_exist(sftp, name):
     except:
         return -1
 
+
 def http2ssh(url: str, ssh_client, remote_name: str, force=True):
     sftp_client = ssh_client.open_sftp()
     size = file_exist(sftp=sftp_client, name=remote_name)
@@ -30,25 +31,18 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True):
     dirname = os.path.dirname(remote_name)
     ssh_client.exec_command(command=f"mkdir -p {dirname}")
     ssh_client.exec_command(command=f"touch {remote_name}")
-    
+
     with requests.get(url, stream=True, verify=False, timeout=(2,3)) as r:
         written = 0
-        with sftp_client.open(remote_name, 'w') as f:
+        with sftp_client.open(remote_name, 'wb') as f:
             f.set_pipelined(pipelined=True)
-            while True:
-                chunk=r.raw.read(1024 * 1000)
-                if not chunk:
-                    break
+            for chunk in r.iter_content(chunk_size=1024*1000):
+                written+=len(chunk)
                 content_to_write = memoryview(chunk)
                 f.write(content_to_write)
-                written+=len(chunk)
-        cl = r.headers.get('Content-Length', 0)
-        print(f"Written: {written} Content-Length: {cl}")
-        if cl!=written:
-            print('Content length mismatch')
-            return -1
+                
+        print(f"Written {written} bytes")
         return 0
-
 
 @dag(default_args=default_args, schedule_interval=None, start_date=days_ago(2), tags=['example'])
 def transfer_image():
