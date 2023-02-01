@@ -8,17 +8,17 @@ class TestADag(unittest.TestCase):
     def setUpClass(cls):
         cls.dagbag = DagBag()
 
-    @unittest.skip('db changed')
+    @unittest.skip("db changed")
     def test_dag_loaded(self):
-        dag = self.dagbag.get_dag(dag_id='firsto')
+        dag = self.dagbag.get_dag(dag_id="firsto")
         print(self.dagbag.import_errors)
         self.assertDictEqual(self.dagbag.import_errors, {}, "not equal")
         assert dag is not None
         self.assertEqual(len(dag.tasks), 2, f"Actually: {len(dag.tasks)}")
 
-    @unittest.skip('db changed')
+    @unittest.skip("db changed")
     def test_tf_loaded(self):
-        dag = self.dagbag.get_dag(dag_id='taskflow_example')
+        dag = self.dagbag.get_dag(dag_id="taskflow_example")
         assert self.dagbag.import_errors == {}
         assert dag is not None
         self.assertEqual(len(dag.tasks), 5, f"Actually: {len(dag.tasks)}")

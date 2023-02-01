@@ -1,11 +1,11 @@
-
 import unittest
 from unittest.mock import MagicMock, patch
+
 from image_transfer import http2ssh
 
-class TestHTTP(unittest.TestCase):
 
-    @patch('image_transfer.file_exist')
+class TestHTTP(unittest.TestCase):
+    @patch("image_transfer.file_exist")
     def test_copy_force(self, exists):
         exists.return_value = 661
 
@@ -14,8 +14,10 @@ class TestHTTP(unittest.TestCase):
         exec = MagicMock()
         my_client.open_sftp.return_value = my_sftp
         my_client.exec_command = exec
-        
-        r = http2ssh(url='foo.bar', ssh_client=my_client, remote_name='/foo/bar/', force=False)
+
+        r = http2ssh(
+            url="foo.bar", ssh_client=my_client, remote_name="/foo/bar/", force=False
+        )
         # file exists and no force:
         self.assertEqual(r, 0)
         exec.assert_not_called()
@@ -24,22 +26,26 @@ class TestHTTP(unittest.TestCase):
 
         my_sftp = MagicMock()
         my_client = MagicMock()
-        exec = MagicMock(side_effect=Exception('Boom!'))
+        exec = MagicMock(side_effect=Exception("Boom!"))
         my_client.open_sftp.return_value = my_sftp
         my_client.exec_command = exec
 
         with self.assertRaises(Exception) as cm:
-            r = http2ssh(url='foo.bar', ssh_client=my_client, remote_name='/foo/bar/', force=False)
-        
-           
-        self.assertEqual(str(cm.exception), 'Boom!')
-        
+            r = http2ssh(
+                url="foo.bar",
+                ssh_client=my_client,
+                remote_name="/foo/bar/",
+                force=False,
+            )
+
+        self.assertEqual(str(cm.exception), "Boom!")
+
         # file does not exist and no force:
-        #self.assertEqual(r, 0)
+        # self.assertEqual(r, 0)
         exec.assert_called()
 
-    @patch('image_transfer.requests.get')
-    @patch('image_transfer.file_exist')
+    @patch("image_transfer.requests.get")
+    @patch("image_transfer.file_exist")
     def test_actual_cpy(self, exists, get):
         exists.return_value = 661
         my_sftp = MagicMock()
@@ -50,15 +56,16 @@ class TestHTTP(unittest.TestCase):
         my_client.open_sftp.return_value = my_sftp
         my_client.exec_command = exec
 
-
-        get().__enter__().iter_content = MagicMock(return_value=[b'blabla'])
-        r = http2ssh(url='foo.bar', ssh_client=my_client, remote_name='/goo/bar', force=True)
+        get().__enter__().iter_content = MagicMock(return_value=[b"blabla"])
+        r = http2ssh(
+            url="foo.bar", ssh_client=my_client, remote_name="/goo/bar", force=True
+        )
         self.assertEqual(r, 0)
         exec.assert_called()
-        wrt.assert_called_once_with(memoryview(b'blabla'))
+        wrt.assert_called_once_with(memoryview(b"blabla"))
 
-    @patch('image_transfer.requests.get')
-    @patch('image_transfer.file_exist')
+    @patch("image_transfer.requests.get")
+    @patch("image_transfer.file_exist")
     def test_missed_cpy(self, exists, get):
         exists.return_value = 661
         my_sftp = MagicMock()
@@ -69,9 +76,11 @@ class TestHTTP(unittest.TestCase):
         my_client.open_sftp.return_value = my_sftp
         my_client.exec_command = exec
 
-        get().__enter__().iter_content = MagicMock(return_value=[b'blabla'])
+        get().__enter__().iter_content = MagicMock(return_value=[b"blabla"])
 
-        r = http2ssh(url='foo.bar', ssh_client=my_client, remote_name='/goo/bar', force=True)
+        r = http2ssh(
+            url="foo.bar", ssh_client=my_client, remote_name="/goo/bar", force=True
+        )
         self.assertEqual(r, 0)
         exec.assert_called()
-        wrt.assert_called_once_with(memoryview(b'blabla'))
+        wrt.assert_called_once_with(memoryview(b"blabla"))

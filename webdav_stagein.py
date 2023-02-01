@@ -1,5 +1,6 @@
 import json
 import os
+import stat
 from io import BytesIO
 from urllib.parse import urlparse
 
@@ -12,19 +13,18 @@ from webdav3.client import Client
 
 from decors import get_connection, remove, setup
 from uploadflow import copy_streams
-import stat
 
 default_args = {
-    'owner': 'airflow',
+    "owner": "airflow",
 }
 
 
 def get_webdav_client(webdav_connid):
     connection = Connection.get_connection_from_secrets(webdav_connid)
     options = {
-        'webdav_hostname': f"https://{connection.host}{connection.schema}",
-        'webdav_login': connection.login,
-        'webdav_password': connection.get_password()
+        "webdav_hostname": f"https://{connection.host}{connection.schema}",
+        "webdav_login": connection.login,
+        "webdav_password": connection.get_password(),
     }
     return Client(options)
 
@@ -36,12 +36,12 @@ def get_webdav_prefix(client, dirname):
         print(f"Empty directory {dirname}")
         return None
 
-    got = [fname for fname in flist if fname['path'].endswith(dirname)]
+    got = [fname for fname in flist if fname["path"].endswith(dirname)]
     if not got:
-        print('Could not determine the prefix... quiting')
+        print("Could not determine the prefix... quiting")
         return None
 
-    prefix = got[0]['path'][0:-len(dirname)]
+    prefix = got[0]["path"][0 : -len(dirname)]
     print(f"Determined common prefix: {prefix}")
 
     return prefix
@@ -49,15 +49,15 @@ def get_webdav_prefix(client, dirname):
 
 def walk_dir(client, path, prefix):
     for p in client.list(path, get_info=True):
-        curr_name = p['path']
+        curr_name = p["path"]
         if curr_name.startswith(prefix):
-            curr_name = curr_name[len(prefix):]
+            curr_name = curr_name[len(prefix) :]
 
         if curr_name == path:
             continue
 
         # will skip empty directories but we can live with that?
-        if p['isdir']:
+        if p["isdir"]:
             yield from walk_dir(client, curr_name, prefix)
             continue
         yield curr_name
@@ -68,36 +68,47 @@ class LFSC(object):
         lst = [os.path.realpath(os.path.join(path, el)) for el in os.listdir(path)]
         if not get_info:
             return lst
-        return [{'path': el, 'isdir':os.path.isdir(el) } for el in lst]
+        return [{"path": el, "isdir": os.path.isdir(el)} for el in lst]
+
 
 class RFSC(object):
     def __init__(self, client, **kwargs):
         self.client = client
-        
+
     def list(self, path, get_info=True):
         if not get_info:
             return [el.filename for el in self.client.listdir_attr(path)]
-        return [{'path': os.path.join(path, el.filename), 'isdir':stat.S_ISDIR(el.st_mode) } for el in self.client.listdir_attr(path)]
+        return [
+            {"path": os.path.join(path, el.filename), "isdir": stat.S_ISDIR(el.st_mode)}
+            for el in self.client.listdir_attr(path)
+        ]
 
-@dag(default_args=default_args, schedule_interval=None, start_date=days_ago(2), tags=['wp6', 'UCIS4EQ'])
+
+@dag(
+    default_args=default_args,
+    schedule_interval=None,
+    start_date=days_ago(2),
+    tags=["wp6", "UCIS4EQ"],
+)
 def webdav_stagein():
-
     @task()
     def load(connection_id, **kwargs):
-        params = kwargs['params']
-        target = params.get('target', '/tmp/')
+        params = kwargs["params"]
+        target = params.get("target", "/tmp/")
 
-        if 'oid' not in params:
-            print("Missing object id in pipeline parameters. Please provide  datacat id")
+        if "oid" not in params:
+            print(
+                "Missing object id in pipeline parameters. Please provide  datacat id"
+            )
             return -1
-        oid = params['oid'] #oid = 'd011b12b-4eca-4482-8425-8c410b349519'
+        oid = params["oid"]  # oid = 'd011b12b-4eca-4482-8425-8c410b349519'
 
         hook = DataCatalogHook()
         try:
-            entry = json.loads(hook.get_entry('dataset', oid))
-            webdav_connid = urlparse(entry['url']).netloc
+            entry = json.loads(hook.get_entry("dataset", oid))
+            webdav_connid = urlparse(entry["url"]).netloc
             print("Will be using webdav connection", webdav_connid)
-            dirname = entry['metadata']['path']
+            dirname = entry["metadata"]["path"]
             print(f"Processing webdav dir: {dirname}")
         except:
             print(f"No entry {oid} in data cat found. Or entry invalid")
@@ -106,7 +117,7 @@ def webdav_stagein():
         client = get_webdav_client(webdav_connid=webdav_connid)
         prefix = get_webdav_prefix(client=client, dirname=dirname)
         if not prefix:
-            print('Unable to determine common prefix, quitting')
+            print("Unable to determine common prefix, quitting")
             return -1
         print(f"Determined common prefix: {prefix}")
 
@@ -130,20 +141,21 @@ def webdav_stagein():
                 res1.write_to(buf)
                 buf.seek(0)
 
-                with sftp_client.open(target_path, 'wb') as f:
+                with sftp_client.open(target_path, "wb") as f:
                     f.set_pipelined(pipelined=True)
                     print(f"Copying {fname}--> {target_path}")
                     copy_streams(inp=buf, outp=f)
 
         return connection_id
 
-    conn_id = PythonOperator(python_callable=setup, task_id='setup_connection')
-    a_id = conn_id.output['return_value']
+    conn_id = PythonOperator(python_callable=setup, task_id="setup_connection")
+    a_id = conn_id.output["return_value"]
 
     ucid = load(connection_id=a_id)
 
-    en = PythonOperator(python_callable=remove, op_kwargs={
-                        'conn_id': ucid}, task_id='cleanup')
+    en = PythonOperator(
+        python_callable=remove, op_kwargs={"conn_id": ucid}, task_id="cleanup"
+    )
 
     conn_id >> ucid >> en
 

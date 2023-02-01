@@ -7,22 +7,26 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 from webdav3.client import Client
 
-from uploadflow import ssh2local_copy
 from decors import get_connection, remove, setup
+from uploadflow import ssh2local_copy
 
 default_args = {
-    'owner': 'airflow',
+    "owner": "airflow",
 }
 
 
-@dag(default_args=default_args, schedule_interval=None, start_date=days_ago(2), tags=['example'])
+@dag(
+    default_args=default_args,
+    schedule_interval=None,
+    start_date=days_ago(2),
+    tags=["example"],
+)
 def webdav_upload():
-
     @task()
     def download(connection_id, **kwargs):
-        params = kwargs['params']
-        target = Variable.get("working_dir", default_var='/tmp/')
-        source = params.get('source', '/tmp/')
+        params = kwargs["params"]
+        target = Variable.get("working_dir", default_var="/tmp/")
+        source = params.get("source", "/tmp/")
         ssh_hook = get_connection(conn_id=connection_id, **kwargs)
 
         mappings = ssh2local_copy(ssh_hook=ssh_hook, source=source, target=target)
@@ -31,13 +35,14 @@ def webdav_upload():
 
     @task()
     def load(mappings, **kwargs):
-        params = kwargs['params']
-        target = params.get('target', '/airflow-test')
-        connection = Connection.get_connection_from_secrets('b2drop_webdav')
-        options = {'webdav_hostname': f"https://{connection.host}{connection.schema}",
-                   'webdav_login': connection.login,
-                   'webdav_password': connection.get_password()
-                   }
+        params = kwargs["params"]
+        target = params.get("target", "/airflow-test")
+        connection = Connection.get_connection_from_secrets("b2drop_webdav")
+        options = {
+            "webdav_hostname": f"https://{connection.host}{connection.schema}",
+            "webdav_login": connection.login,
+            "webdav_password": connection.get_password(),
+        }
         print(f"Translated http to webdav: {options}")
         client = Client(options)
         res = client.mkdir(target)
@@ -56,17 +61,18 @@ def webdav_upload():
 
     @task
     def print_stats(res):
-        print('Finished', res)
+        print("Finished", res)
 
-    setup_task = PythonOperator(
-        python_callable=setup, task_id='setup_connection')
-    a_id = setup_task.output['return_value']
+    setup_task = PythonOperator(python_callable=setup, task_id="setup_connection")
+    a_id = setup_task.output["return_value"]
 
     mappings = download(connection_id=a_id)
     res = load(mappings=mappings)
-    
-    en = PythonOperator(python_callable=remove, op_kwargs={
-                        'conn_id': a_id}, task_id='cleanup')
+
+    en = PythonOperator(
+        python_callable=remove, op_kwargs={"conn_id": a_id}, task_id="cleanup"
+    )
     res >> en
+
 
 dag = webdav_upload()

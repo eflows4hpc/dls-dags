@@ -38,11 +38,16 @@ Params:
 """
 
 default_args = {
-    'owner': 'airflow',
+    "owner": "airflow",
 }
 
 
-@dag(default_args=default_args, schedule_interval=None, start_date=days_ago(2), tags=['example', 'docker', 'datacat'])
+@dag(
+    default_args=default_args,
+    schedule_interval=None,
+    start_date=days_ago(2),
+    tags=["example", "docker", "datacat"],
+)
 def docker_in_worker():
     DW_CONNECTION_ID = "docker_worker"
 
@@ -53,19 +58,19 @@ def docker_in_worker():
         It then downloads all data from the b2share entry to the local disk, and returns a mapping of these files to the local download location,
         which can be used by the following tasks.
         """
-        params = kwargs['params']
+        params = kwargs["params"]
         datacat_hook = DataCatalogHook()
 
-        if 'oid' not in params:  # {"oid": "b143bf73efd24d149bba4c081964b459"}
-            if 'datacat_oid' not in params:
+        if "oid" not in params:  # {"oid": "b143bf73efd24d149bba4c081964b459"}
+            if "datacat_oid" not in params:
                 print("Missing object id in pipeline parameters")
                 return -1  # non zero exit code is a task failure
 
-            params['oid'] = params['datacat_oid']
-            
-        oid_split = params['oid'].split("/")
-        datacat_type = 'dataset'
-        oid = 'placeholder_text'
+            params["oid"] = params["datacat_oid"]
+
+        oid_split = params["oid"].split("/")
+        datacat_type = "dataset"
+        oid = "placeholder_text"
         if len(oid_split) == 2:
             datacat_type = oid_split[0]
             oid = oid_split[1]
@@ -81,14 +86,14 @@ def docker_in_worker():
         b2share_server_uri = entry.url
         # TODO general stage in based on type metadata
         # using only b2share for now
-        b2share_oid = entry.metadata['b2share_oid']
+        b2share_oid = entry.metadata["b2share_oid"]
 
         obj = get_object_md(server=b2share_server_uri, oid=b2share_oid)
         print(f"Retrieved object {oid}: {obj}")
         flist = get_file_list(obj)
 
         name_mappings = {}
-        tmp_dir = Variable.get("working_dir", default_var='/tmp/')
+        tmp_dir = Variable.get("working_dir", default_var="/tmp/")
         print(f"Local working dir is: {tmp_dir}")
 
         for fname, url in flist.items():
@@ -120,7 +125,8 @@ def docker_in_worker():
             sftp_client.mkdir(target_dir, mode=0o755)
             for [truename, local] in files.items():
                 print(
-                    f"Copying {local} --> {DW_CONNECTION_ID}:{os.path.join(target_dir, truename)}")
+                    f"Copying {local} --> {DW_CONNECTION_ID}:{os.path.join(target_dir, truename)}"
+                )
                 sftp_client.put(local, os.path.join(target_dir, truename))
                 # or separate cleanup task?
                 os.unlink(local)
@@ -142,7 +148,7 @@ def docker_in_worker():
             args_to_dockerrun (str):
                 Optional: docker run additional arguments
         """
-        params = kwargs['params']
+        params = kwargs["params"]
 
         cmd = doc.get_dockercmd(params, data_location)
         print(f"Executing docker command {cmd}")
@@ -150,11 +156,7 @@ def docker_in_worker():
         print(f"Using {DW_CONNECTION_ID} connection")
         hook = get_connection(conn_id=DW_CONNECTION_ID)
 
-        task_calculate = SSHOperator(
-            task_id="calculate",
-            ssh_hook=hook,
-            command=cmd
-        )
+        task_calculate = SSHOperator(task_id="calculate", ssh_hook=hook, command=cmd)
 
         context = get_current_context()
         task_calculate.execute(context)
@@ -168,11 +170,7 @@ def docker_in_worker():
         hook = get_connection(conn_id=DW_CONNECTION_ID)
 
         cmd = f"ls -al {output_dir}"
-        process = SSHOperator(
-            task_id="print_results",
-            ssh_hook=hook,
-            command=cmd
-        )
+        process = SSHOperator(task_id="print_results", ssh_hook=hook, command=cmd)
         context = get_current_context()
         process.execute(context)
 
@@ -185,7 +183,7 @@ def docker_in_worker():
         Returns:
             local_fpath (list): the path of the files copied back to the airflow host
         """
-        working_dir = Variable.get("working_dir", default_var='/tmp/')
+        working_dir = Variable.get("working_dir", default_var="/tmp/")
         name_mappings = {}
         print(f"Using {DW_CONNECTION_ID} connection")
         ssh_hook = get_connection(conn_id=DW_CONNECTION_ID)
@@ -198,8 +196,7 @@ def docker_in_worker():
 
                     tmpname = tempfile.mktemp(dir=working_dir)
                     local = os.path.join(working_dir, tmpname)
-                    print(
-                        f"Copying {os.path.join(output_dir, fname)} to {local}")
+                    print(f"Copying {os.path.join(output_dir, fname)} to {local}")
                     sftp_client.get(os.path.join(output_dir, fname), local)
                     name_mappings[fname] = local
 
@@ -239,21 +236,21 @@ def docker_in_worker():
         if not output_mappings:
             print("No output to stage out. Nothing more to do.")
             return -1
-        connection = Connection.get_connection_from_secrets('default_b2share')
+        connection = Connection.get_connection_from_secrets("default_b2share")
 
         server = "https://" + connection.host
-        token = ''
-        if 'access_token' in connection.extra_dejson.keys():
-            token = connection.extra_dejson['access_token']
+        token = ""
+        if "access_token" in connection.extra_dejson.keys():
+            token = connection.extra_dejson["access_token"]
         print(f"Registering data to {server}")
         template = get_record_template()
 
         r = create_draft_record(server=server, token=token, record=template)
         print(f"record {r}")
-        if 'id' in r:
+        if "id" in r:
             print(f"Draft record created {r['id']} --> {r['links']['self']}")
         else:
-            print('Something went wrong with registration', r, r.text)
+            print("Something went wrong with registration", r, r.text)
             return -1
 
         for [truename, local] in output_mappings.items():
@@ -266,7 +263,7 @@ def docker_in_worker():
         submitted = submit_draft(record=r, token=token)
         print(f"Record created {submitted}")
 
-        return submitted['links']['publication']
+        return submitted["links"]["publication"]
 
     @task()
     def register(object_url, additional_metadata={}, **kwargs):
@@ -276,8 +273,8 @@ def docker_in_worker():
             object_url: from b2share
             additional_metadata
         """
-        params = kwargs['params']
-        reg = params.get('register', False)
+        params = kwargs["params"]
+        reg = params.get("register", False)
         if not reg:
             print("Skipping registration as 'register' parameter is not set")
             return 0
@@ -285,22 +282,23 @@ def docker_in_worker():
         hook = DataCatalogHook()
         print("Connected to datacat via hook")
 
-        if not additional_metadata.get('author', False):
-            additional_metadata['author'] = "DLS on behalft of eFlows"
+        if not additional_metadata.get("author", False):
+            additional_metadata["author"] = "DLS on behalft of eFlows"
 
-        if not additional_metadata.get('access', False):
-            additional_metadata['access'] = "hook-based"
+        if not additional_metadata.get("access", False):
+            additional_metadata["access"] = "hook-based"
 
-        entry = DataCatalogEntry(name=f"DLS results {kwargs['run_id']}",
-                                 url=object_url,
-                                 metadata=additional_metadata
-                                 )
+        entry = DataCatalogEntry(
+            name=f"DLS results {kwargs['run_id']}",
+            url=object_url,
+            metadata=additional_metadata,
+        )
         try:
-            r = hook.create_entry(datacat_type='dataset', entry=entry)
+            r = hook.create_entry(datacat_type="dataset", entry=entry)
             print("Hook registration returned: ", r)
             return f"{hook.base_url}/dataset/{r}"
         except ConnectionError as e:
-            print('Registration failed', e)
+            print("Registration failed", e)
             return -1
 
     input_files = stagein()
