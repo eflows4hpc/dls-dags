@@ -1,0 +1,8 @@
+apache-airflow==2.5.1
+apache-airflow-providers-ssh
+apache-airflow-providers-hashicorp
+boto3==1.24.32
+plyvel
+webdavclient3
+--index-url https://gitlab.jsc.fz-juelich.de/api/v4/projects/4405/packages/pypi/simple
+airflow-datacat-integration>=0.1.4
