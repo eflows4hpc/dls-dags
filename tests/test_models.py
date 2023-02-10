@@ -7,7 +7,7 @@ try:
     from mlflow.client import MlflowClient
 except ImportError:
     print("Unable to import mlflow")
-    
+
 
 from model_transfer import transfer_model
 
@@ -24,7 +24,7 @@ class TestModels(unittest.TestCase):
 
     # @patch('image_transfer.file_exist')
     def test_transfer(self):
-        if 'MlflowClient' not in locals():
+        if "MlflowClient" not in locals():
             return 0
 
         local_client = create_autospec(MlflowClient)

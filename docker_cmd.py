@@ -1,4 +1,3 @@
-
 WORKER_DATA_LOCATION = "/wf_pipeline_data/userdata"
 
 

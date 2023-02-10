@@ -7,8 +7,7 @@ from airflow.models.connection import Connection
 from airflow.providers.ssh.hooks.ssh import SSHHook
 from airflow.utils.dates import days_ago
 
-from b2shareoperator import (download_file, get_file_list, get_object_md,
-                             get_objects)
+from b2shareoperator import download_file, get_file_list, get_object_md, get_objects
 
 default_args = {"owner": "airflow"}
 

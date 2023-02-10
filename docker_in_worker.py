@@ -12,9 +12,15 @@ from datacat_integration.connection import DataCatalogEntry
 from datacat_integration.hooks import DataCatalogHook
 
 import docker_cmd as doc
-from b2shareoperator import (add_file, create_draft_record, download_file,
-                             get_file_list, get_object_md, get_record_template,
-                             submit_draft)
+from b2shareoperator import (
+    add_file,
+    create_draft_record,
+    download_file,
+    get_file_list,
+    get_object_md,
+    get_record_template,
+    submit_draft,
+)
 from decors import get_connection
 from docker_cmd import WORKER_DATA_LOCATION
 

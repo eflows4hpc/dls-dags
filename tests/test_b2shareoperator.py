@@ -8,9 +8,17 @@ from airflow.utils.dates import days_ago
 from airflow.utils.state import DagRunState, State
 from airflow.utils.types import DagRunType
 
-from b2shareoperator import (B2ShareOperator, add_file, create_draft_record,
-                             download_file, get_file_list, get_object_md,
-                             get_objects, get_record_template, submit_draft)
+from b2shareoperator import (
+    B2ShareOperator,
+    add_file,
+    create_draft_record,
+    download_file,
+    get_file_list,
+    get_object_md,
+    get_objects,
+    get_record_template,
+    submit_draft,
+)
 
 DEFAULT_DATE = "2019-10-03"
 TEST_DAG_ID = "test_my_custom_operator"
