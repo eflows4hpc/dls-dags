@@ -34,7 +34,6 @@ def get_connection(conn_id, **kwargs):
         vault_hook = VaultHook(vault_conn_id="my_vault")
         con = vault_hook.get_secret(secret_path=f"/ssh-credentials/{conn_id[6:]}")
         print(f"Got some values from vault {list(con.keys())}")
-
         # for now SSH is hardcoded
         params = kwargs["params"]
         host = params.get("host")
@@ -70,8 +69,6 @@ def remove(conn_id):
 
     print(f"Removing conneciton {conn_id}")
     session = settings.Session()
-    for con in session.query(Connection).all():
-        print(con)
 
     session.query(Connection).filter(Connection.conn_id == conn_id).delete()
     session.commit()
