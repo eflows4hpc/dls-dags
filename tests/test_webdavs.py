@@ -1,10 +1,11 @@
 import unittest
 from collections import namedtuple
-from unittest.mock import MagicMock, create_autospec
+from unittest.mock import MagicMock, create_autospec, patch
 
 from paramiko.sftp_client import SFTPClient
 
-from webdav_stagein import LFSC, RFSC, get_webdav_prefix, walk_dir
+from webdav_stagein import LFSC, RFSC, get_webdav_prefix, walk_dir, resolve_oid
+import json
 
 Entry = namedtuple("Entry", ["st_mode", "filename"])
 
@@ -59,6 +60,13 @@ class TestWebDAV(unittest.TestCase):
         self.assertIsNotNone(prefix)
         self.assertEqual("/remote.php/webdav/", prefix)
 
+        prefix = get_webdav_prefix(client=client, dirname="foo-bar/")
+        self.assertIsNone(prefix)
+
+        client.list.return_value = None
+        prefix = get_webdav_prefix(client=client, dirname="airflow-tests/")
+        self.assertIsNone(prefix)
+
     def test_walk(self):
         client = MagicMock()
         client.list = MagicMock(
@@ -77,6 +85,9 @@ class TestWebDAV(unittest.TestCase):
 
     def test_walk_local(self):
         local_client = LFSC()
+        lst = local_client.list(path=".", get_info=True)
+        self.assertTrue(len(lst) > 0)
+
         lst = walk_dir(client=local_client, prefix="", path="/tmp/")
         self.assertIsNotNone(lst)
 
@@ -102,3 +113,18 @@ class TestWebDAV(unittest.TestCase):
         self.assertListEqual(
             ["/tmp/afile/barafile", "/tmp/afile/barfoo", "/tmp/foo"], lst
         )
+
+    @patch("webdav_stagein.DataCatalogHook")
+    def test_resolve(self, hook):
+
+        ret = resolve_oid(oid=777)
+        self.assertEqual(ret, (-1, -1))
+
+        mm = MagicMock()
+        mm.get_entry.return_value = json.dumps(
+            {"url": "http://foo.bar/", "metadata": {"path": "/foo/bar/"}}
+        )
+        hook.return_value = mm
+
+        ret = resolve_oid(oid=777)
+        self.assertEqual(ret, ("foo.bar", "/foo/bar/"))

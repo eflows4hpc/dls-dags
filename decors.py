@@ -3,7 +3,10 @@ from airflow.models.connection import Connection
 from airflow.providers.hashicorp.hooks.vault import VaultHook
 from airflow.providers.ssh.hooks.ssh import SSHHook
 
-
+def get_parameter(parameter, default=False, **kwargs):
+    params = kwargs["params"]
+    return params.get(parameter, default)
+    
 def create_temp_connection(rrid, params):
     host = params.get("host")
     port = params.get("port", 2222)

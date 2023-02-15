@@ -11,8 +11,7 @@ from datacat_integration.connection import DataCatalogEntry
 from datacat_integration.hooks import DataCatalogHook
 
 from b2shareoperator import add_file, create_draft_record, get_community, submit_draft
-from decors import get_connection, remove, setup
-from justreg import get_parameter
+from decors import get_connection, remove, setup, get_parameter
 
 default_args = {
     "owner": "airflow",

@@ -11,7 +11,7 @@ from airflow.utils.dates import days_ago
 from datacat_integration.hooks import DataCatalogHook
 from webdav3.client import Client
 
-from decors import get_connection, remove, setup
+from decors import get_connection, remove, setup, get_parameter
 from uploadflow import copy_streams
 
 default_args = {
@@ -84,6 +84,20 @@ class RFSC(object):
         ]
 
 
+def resolve_oid(oid):
+    hook = DataCatalogHook()
+    try:
+        entry = json.loads(hook.get_entry("dataset", oid))
+        webdav_connid = urlparse(entry["url"]).netloc
+        print("Will be using webdav connection", webdav_connid)
+        dirname = entry["metadata"]["path"]
+        print(f"Processing webdav dir: {dirname}")
+        return webdav_connid, dirname
+    except Exception as e:
+        print(f"No entry {oid} in data cat found. Or entry invalid. {e}")
+        return -1, -1
+
+
 @dag(
     default_args=default_args,
     schedule_interval=None,
@@ -96,22 +110,15 @@ def webdav_stagein():
         params = kwargs["params"]
         target = params.get("target", "/tmp/")
 
-        if "oid" not in params:
+        oid = get_parameter(parameter='oid', default=False, **kwargs)
+        if not oid:
             print(
-                "Missing object id in pipeline parameters. Please provide  datacat id"
+                "Missing object id (oid) in pipeline parameters. Please provide  datacat id"
             )
             return -1
-        oid = params["oid"]  # oid = 'd011b12b-4eca-4482-8425-8c410b349519'
-
-        hook = DataCatalogHook()
-        try:
-            entry = json.loads(hook.get_entry("dataset", oid))
-            webdav_connid = urlparse(entry["url"]).netloc
-            print("Will be using webdav connection", webdav_connid)
-            dirname = entry["metadata"]["path"]
-            print(f"Processing webdav dir: {dirname}")
-        except:
-            print(f"No entry {oid} in data cat found. Or entry invalid")
+        
+        webdav_connid, dirname = resolve_oid(oid=oid)
+        if webdav_connid == -1:
             return -1
 
         client = get_webdav_client(webdav_connid=webdav_connid)
@@ -119,6 +126,7 @@ def webdav_stagein():
         if not prefix:
             print("Unable to determine common prefix, quitting")
             return -1
+
         print(f"Determined common prefix: {prefix}")
 
         print(f"Using ssh {connection_id} connection")
