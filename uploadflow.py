@@ -1,6 +1,5 @@
 import json
 import os
-import tempfile
 
 from airflow.decorators import dag, task
 from airflow.models import Variable
@@ -11,7 +10,8 @@ from datacat_integration.connection import DataCatalogEntry
 from datacat_integration.hooks import DataCatalogHook
 
 from b2shareoperator import add_file, create_draft_record, get_community, submit_draft
-from decors import get_connection, remove, setup, get_parameter
+from decors import get_connection, get_parameter, remove, setup
+from utils import ssh2local_copy
 
 default_args = {
     "owner": "airflow",
@@ -33,45 +33,6 @@ def create_template(hrespo):
         },
         "open_access": hrespo["open_access"] == "True",
     }
-
-
-def copy_streams(inp, outp, chunk_size=1024 * 1000):
-    while True:
-        chunk = inp.read(chunk_size)
-        if not chunk:
-            break
-        content_to_write = memoryview(chunk)
-        outp.write(content_to_write)
-
-
-def ssh_download(sftp_client, remote, local):
-    # sftp_client.get(remote, local)
-    with sftp_client.open(remote, "rb") as i:
-        with open(local, "wb") as o:
-            i.set_pipelined(pipelined=True)
-            copy_streams(inp=i, outp=o)
-
-
-def ssh2local_copy(ssh_hook, source: str, target: str):
-    with ssh_hook.get_conn() as ssh_client:
-        sftp_client = ssh_client.open_sftp()
-        lst = sftp_client.listdir(path=source)
-
-        print(f"{len(lst)} objects in {source}")
-        mappings = dict()
-        for fname in lst:
-            local = tempfile.mktemp(prefix="dls", dir=target)
-            full_name = os.path.join(source, fname)
-            sts = sftp_client.stat(full_name)
-            if str(sts).startswith("d"):
-                print(f"{full_name} is a directory. Skipping")
-                continue
-
-            print(f"Copying {full_name} --> {local}")
-            ssh_download(sftp_client=sftp_client, remote=full_name, local=local)
-            mappings[local] = fname
-
-    return mappings
 
 
 @dag(

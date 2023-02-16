@@ -1,49 +1,15 @@
 import os
 
-import requests
 from airflow.decorators import dag, task
 from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 
 from decors import get_connection, remove, setup
+from utils import http2ssh
 
 default_args = {
     "owner": "airflow",
 }
-
-
-def file_exist(sftp, name):
-    try:
-        r = sftp.stat(name)
-        return r.st_size
-    except:
-        return -1
-
-
-def http2ssh(url: str, ssh_client, remote_name: str, force=True):
-    sftp_client = ssh_client.open_sftp()
-    size = file_exist(sftp=sftp_client, name=remote_name)
-    if size > 0:
-        print(f"File {remote_name} exists and has {size} bytes")
-        if force is not True:
-            return 0
-        print("Forcing overwrite")
-
-    dirname = os.path.dirname(remote_name)
-    ssh_client.exec_command(command=f"mkdir -p {dirname}")
-    ssh_client.exec_command(command=f"touch {remote_name}")
-
-    with requests.get(url, stream=True, verify=False, timeout=(2, 3)) as r:
-        written = 0
-        with sftp_client.open(remote_name, "wb") as f:
-            f.set_pipelined(pipelined=True)
-            for chunk in r.iter_content(chunk_size=1024 * 1000):
-                written += len(chunk)
-                content_to_write = memoryview(chunk)
-                f.write(content_to_write)
-
-        print(f"Written {written} bytes")
-        return 0
 
 
 @dag(

@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
-from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 from airflow.sensors.filesystem import FileSensor
 from airflow.utils.dates import days_ago
@@ -32,8 +31,6 @@ with DAG(
     t1 = BashOperator(task_id="move_data", bash_command="date")
     t2 = PythonOperator(task_id="train_model", python_callable=train_model)
     t3 = BashOperator(task_id="eval_model", bash_command='echo "evaluating"')
-    t4 = DummyOperator(task_id="upload_model_to_repo")
-    t5 = DummyOperator(task_id="publish_results")
 
-    s1 >> t1 >> t2 >> t4
-    t2 >> t3 >> t5
+    s1 >> t1 >> t2
+    t2 >> t3

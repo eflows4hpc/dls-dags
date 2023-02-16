@@ -10,8 +10,7 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 
 from decors import get_connection, remove, setup
-from uploadflow import ssh_download
-from webdav_stagein import LFSC, RFSC, walk_dir
+from utils import LFSC, RFSC, ssh_download, walk_dir
 
 try:
     from mlflow.client import MlflowClient

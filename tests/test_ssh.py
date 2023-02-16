@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from uploadflow import copy_streams, ssh2local_copy
+from utils import copy_streams, ssh2local_copy
 
 
 class TestSSH(unittest.TestCase):
@@ -15,7 +15,7 @@ class TestSSH(unittest.TestCase):
         except OSError as err:
             print("Wasnt there probably", err)
 
-    @patch("uploadflow.tempfile.mktemp")
+    @patch("utils.tempfile.mktemp")
     def test_copy_files(self, tmp):
         tmp.side_effect = ["tmpA", "tmpB"]
 
@@ -36,7 +36,7 @@ class TestSSH(unittest.TestCase):
         print(mapps)
         self.assertEqual(len(mapps), 2)
 
-    @patch("uploadflow.tempfile.mktemp")
+    @patch("utils.tempfile.mktemp")
     def test_skipdir_files(self, tmp):
         tmp.side_effect = ["tmpA", "tmpB"]
 

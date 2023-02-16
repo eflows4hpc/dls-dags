@@ -3,7 +3,7 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 
 from decors import get_connection, remove, setup
-from image_transfer import http2ssh
+from utils import http2ssh
 
 default_args = {
     "owner": "airflow",
@@ -29,6 +29,7 @@ def plainhttp2ssh():
 
         print(f"Putting {url} --> {target}")
         ssh_hook = get_connection(conn_id=connection_id, **kwargs)
+        
 
         with ssh_hook.get_conn() as ssh_client:
             return http2ssh(

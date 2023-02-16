@@ -18,7 +18,7 @@ with DAG(
     default_args=def_args,
     description="simple testing dag",
     schedule_interval=timedelta(days=1),
-    start_date=days_ago(2),
+    start_date=days_ago(1),
 ) as dag:
     t1 = BashOperator(task_id="print_date", bash_command="date")
     t2 = BashOperator(task_id="do_noting", bash_command="sleep 5")

@@ -1,101 +1,16 @@
-import json
 import os
-import stat
 from io import BytesIO
-from urllib.parse import urlparse
 
 from airflow.decorators import dag, task
-from airflow.models.connection import Connection
 from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
-from datacat_integration.hooks import DataCatalogHook
-from webdav3.client import Client
 
-from decors import get_connection, remove, setup, get_parameter
-from uploadflow import copy_streams
+from decors import get_connection, get_parameter, remove, setup
+from utils import copy_streams, resolve_oid, get_webdav_client, get_webdav_prefix, walk_dir
 
 default_args = {
     "owner": "airflow",
 }
-
-
-def get_webdav_client(webdav_connid):
-    connection = Connection.get_connection_from_secrets(webdav_connid)
-    options = {
-        "webdav_hostname": f"https://{connection.host}{connection.schema}",
-        "webdav_login": connection.login,
-        "webdav_password": connection.get_password(),
-    }
-    return Client(options)
-
-
-def get_webdav_prefix(client, dirname):
-    # not so efficient
-    flist = client.list(dirname, get_info=True)
-    if not flist:
-        print(f"Empty directory {dirname}")
-        return None
-
-    got = [fname for fname in flist if fname["path"].endswith(dirname)]
-    if not got:
-        print("Could not determine the prefix... quiting")
-        return None
-
-    prefix = got[0]["path"][0 : -len(dirname)]
-    print(f"Determined common prefix: {prefix}")
-
-    return prefix
-
-
-def walk_dir(client, path, prefix):
-    for p in client.list(path, get_info=True):
-        curr_name = p["path"]
-        if curr_name.startswith(prefix):
-            curr_name = curr_name[len(prefix) :]
-
-        if curr_name == path:
-            continue
-
-        # will skip empty directories but we can live with that?
-        if p["isdir"]:
-            yield from walk_dir(client, curr_name, prefix)
-            continue
-        yield curr_name
-
-
-class LFSC(object):
-    def list(self, path, get_info=True):
-        lst = [os.path.realpath(os.path.join(path, el)) for el in os.listdir(path)]
-        if not get_info:
-            return lst
-        return [{"path": el, "isdir": os.path.isdir(el)} for el in lst]
-
-
-class RFSC(object):
-    def __init__(self, client, **kwargs):
-        self.client = client
-
-    def list(self, path, get_info=True):
-        if not get_info:
-            return [el.filename for el in self.client.listdir_attr(path)]
-        return [
-            {"path": os.path.join(path, el.filename), "isdir": stat.S_ISDIR(el.st_mode)}
-            for el in self.client.listdir_attr(path)
-        ]
-
-
-def resolve_oid(oid):
-    hook = DataCatalogHook()
-    try:
-        entry = json.loads(hook.get_entry("dataset", oid))
-        webdav_connid = urlparse(entry["url"]).netloc
-        print("Will be using webdav connection", webdav_connid)
-        dirname = entry["metadata"]["path"]
-        print(f"Processing webdav dir: {dirname}")
-        return webdav_connid, dirname
-    except Exception as e:
-        print(f"No entry {oid} in data cat found. Or entry invalid. {e}")
-        return -1, -1
 
 
 @dag(
@@ -110,13 +25,13 @@ def webdav_stagein():
         params = kwargs["params"]
         target = params.get("target", "/tmp/")
 
-        oid = get_parameter(parameter='oid', default=False, **kwargs)
+        oid = get_parameter(parameter="oid", default=False, **kwargs)
         if not oid:
             print(
                 "Missing object id (oid) in pipeline parameters. Please provide  datacat id"
             )
             return -1
-        
+
         webdav_connid, dirname = resolve_oid(oid=oid)
         if webdav_connid == -1:
             return -1

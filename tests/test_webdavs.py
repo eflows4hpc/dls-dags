@@ -1,11 +1,11 @@
+import json
 import unittest
 from collections import namedtuple
 from unittest.mock import MagicMock, create_autospec, patch
 
 from paramiko.sftp_client import SFTPClient
 
-from webdav_stagein import LFSC, RFSC, get_webdav_prefix, walk_dir, resolve_oid
-import json
+from utils import LFSC, RFSC, get_webdav_prefix, resolve_oid, walk_dir
 
 Entry = namedtuple("Entry", ["st_mode", "filename"])
 
@@ -114,7 +114,7 @@ class TestWebDAV(unittest.TestCase):
             ["/tmp/afile/barafile", "/tmp/afile/barfoo", "/tmp/foo"], lst
         )
 
-    @patch("webdav_stagein.DataCatalogHook")
+    @patch("utils.DataCatalogHook")
     def test_resolve(self, hook):
 
         ret = resolve_oid(oid=777)

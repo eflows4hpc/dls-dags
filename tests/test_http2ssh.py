@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from image_transfer import http2ssh
+from utils import http2ssh
 
 
 class TestHTTP(unittest.TestCase):
-    @patch("image_transfer.file_exist")
+    @patch("utils.file_exist")
     def test_copy_force(self, exists):
         exists.return_value = 661
 
@@ -44,8 +44,8 @@ class TestHTTP(unittest.TestCase):
         # self.assertEqual(r, 0)
         exec.assert_called()
 
-    @patch("image_transfer.requests.get")
-    @patch("image_transfer.file_exist")
+    @patch("utils.requests.get")
+    @patch("utils.file_exist")
     def test_actual_cpy(self, exists, get):
         exists.return_value = 661
         my_sftp = MagicMock()
@@ -64,8 +64,8 @@ class TestHTTP(unittest.TestCase):
         exec.assert_called()
         wrt.assert_called_once_with(memoryview(b"blabla"))
 
-    @patch("image_transfer.requests.get")
-    @patch("image_transfer.file_exist")
+    @patch("utils.requests.get")
+    @patch("utils.file_exist")
     def test_missed_cpy(self, exists, get):
         exists.return_value = 661
         my_sftp = MagicMock()
