@@ -2,6 +2,10 @@ name: Integration tests
 
 on: [push]
 
+env:
+  AIRFLOW__CORE__DAGS_FOLDER: $GITHUB_WORKSPACE 
+  AIRFLOW__CORE__LOAD_EXAMPLES: False
+
 jobs:
   runner-job:
     runs-on: ubuntu-latest
@@ -27,6 +31,8 @@ jobs:
 
       - name: Verify airflow
         run: |
+          echo "Workspace: $GITHUB_WORKSPACE"
+          echo "ENV: $AIRFLOW__CORE__DAGS_FOLDER"
           airflow dags list
           airflow connections list
 
