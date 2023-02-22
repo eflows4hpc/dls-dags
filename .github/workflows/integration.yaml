@@ -1,0 +1,40 @@
+name: Integration tests
+
+on: [push]
+
+jobs:
+  runner-job:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9"]
+
+    services:
+      openssh-server:
+        image: lscr.io/linuxserver/openssh-server:latest
+        ports:
+          - 2222:2222
+        env:
+          - PASSWORD_ACCESS=false
+          - PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC6r65rnWbUwcOp1KBnbD+gk5xCsDJcxRQC0M2Lv87LKtUMyoenetG40YK7MqHO3DBDwBO2ge1AAMf8JjDz9PUS1oM9K+plGZYcS6M9PCyuC26WlGQFxow7fmUHZ8Q0EwtGAD1yabJNx25OqdtgvtR0wqhiFzDTJOAuU0r0fS+dtQ=="
+          - USER_NAME=eflows
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Checkout
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          airflow db init
+      - name: Verify airflow
+        run: |
+          airflow dags list
+          airflow connections list
+      - name: Connect to ssh
+        run: |
+          cd integration
+          python tester.py
+
