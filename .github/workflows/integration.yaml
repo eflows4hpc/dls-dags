@@ -19,6 +19,8 @@ jobs:
            PASSWORD_ACCESS: false
            PUBLIC_KEY: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC6r65rnWbUwcOp1KBnbD+gk5xCsDJcxRQC0M2Lv87LKtUMyoenetG40YK7MqHO3DBDwBO2ge1AAMf8JjDz9PUS1oM9K+plGZYcS6M9PCyuC26WlGQFxow7fmUHZ8Q0EwtGAD1yabJNx25OqdtgvtR0wqhiFzDTJOAuU0r0fS+dtQ=="
            USER_NAME: eflows
+        volumes:
+          - /target/:/tmp/
 
     steps:
       - uses: actions/checkout@v3
@@ -34,10 +36,11 @@ jobs:
           echo "Workspace: $GITHUB_WORKSPACE"
           echo "ENV: $AIRFLOW__CORE__DAGS_FOLDER"
           airflow dags list
-          airflow connections list
 
       - name: Connect to ssh
         run: |
           cd integration
           python tester.py
+          ls /target/
+          diff /target/data.txt data.txt
 

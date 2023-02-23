@@ -2,22 +2,36 @@ import json
 import subprocess
 import re
 
+from argparse import ArgumentParser
 
-def get_config():
+def get_config(host, port, login):
 
     return {
         "force": True,
-        "url": "https://raw.githubusercontent.com/eflows4hpc/dls-dags/master/README.md",
-        "host": "0.0.0.0",
+        "url": "https://raw.githubusercontent.com/eflows4hpc/dls-dags/master/integration/data.txt",
+        "host": host,
         "target": "/tmp/myfile",
-        "login": "eflows",
-        "port": 2222,
+        "login": login,
+        "port": port,
         "key": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAlwAAAAdzc2gtcn\nNhAAAAAwEAAQAAAIEAuq+ua51m1MHDqdSgZ2w/oJOcQrAyXMUUAtDNi7/OyyrVDMqHp3rR\nuNGCuzKhztwwQ8ATtoHtQADH/CYw8/T1EtaDPSvqZRmWHEujPTwsrgtulpRkBcaMO35lB2\nfENBMLRgA9cmmyTcduTqnbYL7UdMKoYhcw0yTgLlNK9H0vnbUAAAIA+0Tb/ftE2/0AAAAH\nc3NoLXJzYQAAAIEAuq+ua51m1MHDqdSgZ2w/oJOcQrAyXMUUAtDNi7/OyyrVDMqHp3rRuN\nGCuzKhztwwQ8ATtoHtQADH/CYw8/T1EtaDPSvqZRmWHEujPTwsrgtulpRkBcaMO35lB2fE\nNBMLRgA9cmmyTcduTqnbYL7UdMKoYhcw0yTgLlNK9H0vnbUAAAADAQABAAAAgQCvBjSNuk\nWFZKBP4gP80rUYlCulLlIZPb/UH/UFd2+mdOLHmj3yXCixkONzJDYlnbQ2YKdarZdEMTdN\nhHTS067LPzBJ0wOwt+Q2ZoVnJ//Glp1JoYX4ldEfGT0Ihmqn3wJscHwIGeWbM4AD/ZIa9H\n8BnMWq8d4x7W4aLOd11xxpYQAAAEALdgo2Ti1lmq9rmyAj8s5OjeJxwzdFUsuMPAGgD+D4\nqowTAehb7aLqkjtZyJn2HliLVODrNohW+uFsciQsaRLmAAAAQQDkycH+AJ7kHW4wcb8RLr\n/HU52EVKIcCv0bwqwnATKQIbz8fqCldhdD8O47rpBsD7Iyvp9PDjPFTiBXhBfqwGydAAAA\nQQDQ4/zEgPFngsuI+e4j1H4oSmLgAXsw1kcDNYq7a/JK7R7kGnIhPX7tI0qiFrq0h9iKip\niKOaW0KG6obaAX6g35AAAACWpqQGpqLTkwOAE=\n-----END OPENSSH PRIVATE KEY-----\n",
     }
 
 
 if __name__ == "__main__":
-    conf = get_config()
+
+    parser = ArgumentParser(
+        prog='DAG tester',
+        description='Tests dags in integration env'
+    )
+
+    parser.add_argument('--host', default='localhost')
+    parser.add_argument('-p', '--port', type=int, default=2222)
+    parser.add_argument('-u', '--user', default='eflows')
+
+    args = parser.parse_args()
+
+
+    conf = get_config(host=args.host, port=args.port, login=args.user)
     cfgstr = json.dumps(conf)
 
     res = subprocess.run(
@@ -31,4 +45,4 @@ if __name__ == "__main__":
     s = res.stdout.decode()
 
     bts = int(re.findall("Written (\d+)", s)[0])
-    assert bts == 649
+    assert bts == 1669
