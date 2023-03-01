@@ -6,16 +6,6 @@ env:
   AIRFLOW__CORE__DAGS_FOLDER: $GITHUB_WORKSPACE 
   AIRFLOW__CORE__LOAD_EXAMPLES: False
 
-jobs:
-  setup-job:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Setup dirs
-        run: |
-           mkdir $HOME/sshdir
-           cd $HOME/sshdir
-           pwd
-
   runner-job:
     runs-on: ubuntu-latest
 
@@ -50,11 +40,12 @@ jobs:
       - name: Setup access
         run: |
            docker ps -a
-           docker exec openssh-server chown eflows /tmps/
+           did=`docker ps -f "ancestor=lscr.io/linuxserver/openssh-server" --format '{{ .ID }} '`
+           docker exec $did chown eflows /tmps/
 
       - name: Connect to ssh
         run: |
           cd integration
           python tester.py --target /tmps/file
-          
+
 
