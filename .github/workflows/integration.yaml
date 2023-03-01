@@ -6,6 +6,7 @@ env:
   AIRFLOW__CORE__DAGS_FOLDER: $GITHUB_WORKSPACE 
   AIRFLOW__CORE__LOAD_EXAMPLES: False
 
+jobs:
   runner-job:
     runs-on: ubuntu-latest
 
