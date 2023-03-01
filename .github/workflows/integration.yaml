@@ -48,5 +48,8 @@ jobs:
         run: |
           cd integration
           python tester.py --target /tmps/file
+          ls /home/runner/sshdir/sshdir
+          cat /home/runner/sshdir/sshdir/file
+          diff /home/runner/sshdir/sshdir/file integration/data.txt
 
 
