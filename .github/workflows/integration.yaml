@@ -8,6 +8,7 @@ env:
 
 jobs:
   setup-job:
+    runs-on: ubuntu-latest
     steps:
       - name: Setup dirs
         run: |
