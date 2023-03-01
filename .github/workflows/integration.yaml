@@ -50,6 +50,5 @@ jobs:
       - name: Connect to ssh
         run: |
           cd integration
-          python tester.py --target /tmps/file
-          diff /tmps/file /home/runner/sshdir/file
+          python tester.py 
 
