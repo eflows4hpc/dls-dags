@@ -13,6 +13,8 @@ jobs:
       - name: Setup dirs
         run: |
            mkdir $HOME/sshdir
+           cd $HOME/sshdir
+           pwd
 
   runner-job:
     runs-on: ubuntu-latest
