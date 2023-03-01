@@ -47,8 +47,14 @@ jobs:
           echo "ENV: $AIRFLOW__CORE__DAGS_FOLDER"
           airflow dags list
 
+      - name: Setup access
+        run: |
+           docker ps -a
+           docker exec openssh-server chown eflows /tmps/
+
       - name: Connect to ssh
         run: |
           cd integration
-          python tester.py 
+          python tester.py --target /tmps/file
+          
 
