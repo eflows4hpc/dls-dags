@@ -78,7 +78,6 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
                 written += len(chunk)
                 content_to_write = memoryview(chunk)
                 f.write(content_to_write)
-                print("Written chunk", chunk)
 
         print(f"Written {written} bytes")
         return 0
