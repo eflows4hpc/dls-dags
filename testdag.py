@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
-from airflow.utils.dates import days_ago
+import pendulum
 
 def_args = {
     "owner": "airflow",
@@ -17,10 +17,10 @@ with DAG(
     "testdag",
     default_args=def_args,
     description="simple testing dag",
-    schedule_interval=timedelta(days=1),
-    start_date=days_ago(1),
+    schedule_interval=None,
+    start_date=pendulum.yesterday(),
 ) as dag:
     t1 = BashOperator(task_id="print_date", bash_command="date")
-    t2 = BashOperator(task_id="do_noting", bash_command="sleep 5")
+    t2 = BashOperator(task_id="do_noting", bash_command="sleep 1")
 
     t1 >> t2

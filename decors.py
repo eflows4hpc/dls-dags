@@ -34,6 +34,16 @@ def create_temp_connection(rrid, params):
     return conn_id
 
 
+def get_creds_from_vault_path(path):
+    if not path:
+        return None, None
+
+    vault_hook = VaultHook(vault_conn_id="my_vault")
+    vals = vault_hook.get_secret(secret_path=path)
+    print(f"Got creds from vault: {list(vals.keys())}")
+    return vals["user"], vals["password"]
+
+
 def get_connection(conn_id, **kwargs):
     if conn_id.startswith("vault"):
         vault_hook = VaultHook(vault_conn_id="my_vault")
@@ -57,8 +67,8 @@ def get_connection(conn_id, **kwargs):
 
 
 def setup(**kwargs):
-    params = kwargs["params"]
     print("Setting up the connection")
+    params = kwargs["params"]
 
     if "vault_id" in params:
         print("Retrieving connection details from vault")

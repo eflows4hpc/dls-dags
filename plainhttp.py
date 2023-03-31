@@ -29,7 +29,6 @@ def plainhttp2ssh():
 
         print(f"Putting {url} --> {target}")
         ssh_hook = get_connection(conn_id=connection_id, **kwargs)
-        
 
         with ssh_hook.get_conn() as ssh_client:
             return http2ssh(

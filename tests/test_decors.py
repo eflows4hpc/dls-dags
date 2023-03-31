@@ -3,7 +3,13 @@ from unittest.mock import MagicMock, patch
 
 from airflow import settings
 
-from decors import create_temp_connection, get_connection, remove, setup
+from decors import (
+    create_temp_connection,
+    get_connection,
+    remove,
+    setup,
+    get_creds_from_vault_path,
+)
 
 
 class TestDecors(unittest.TestCase):
@@ -83,3 +89,18 @@ wFWYfCPtYhDi3iKnEAAAAJampAamotOTA4AQI=
         self.assertEqual(0, len(rows))
 
         remove(conn_id="vault_888")
+
+    def test_creds_from_path(self):
+        user, password = get_creds_from_vault_path(path="")
+        self.assertIsNone(user)
+        self.assertIsNone(password)
+
+    @patch("decors.VaultHook")
+    def test_proper_creds(self, vh):
+        mm = MagicMock()
+        mm.get_secret.return_value = {"user": "foo", "password": "bar"}
+        vh.return_value = mm
+        user, password = get_creds_from_vault_path(path="/http-creds/eflows/foo")
+        self.assertIsNotNone(user)
+        self.assertEqual(user, "foo")
+        self.assertEqual(password, "bar")

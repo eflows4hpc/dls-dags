@@ -6,7 +6,13 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 
 from decors import get_connection, get_parameter, remove, setup
-from utils import copy_streams, resolve_oid, get_webdav_client, get_webdav_prefix, walk_dir
+from utils import (
+    copy_streams,
+    resolve_oid,
+    get_webdav_client,
+    get_webdav_prefix,
+    walk_dir,
+)
 
 default_args = {
     "owner": "airflow",

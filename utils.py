@@ -57,7 +57,7 @@ def file_exist(sftp, name):
         return -1
 
 
-def http2ssh(url: str, ssh_client, remote_name: str, force=True):
+def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
     sftp_client = ssh_client.open_sftp()
     size = file_exist(sftp=sftp_client, name=remote_name)
     if size > 0:
@@ -70,7 +70,7 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True):
     ssh_client.exec_command(command=f"mkdir -p {dirname}")
     ssh_client.exec_command(command=f"touch {remote_name}")
 
-    with requests.get(url, stream=True, verify=False, timeout=(2, 3)) as r:
+    with requests.get(url, stream=True, verify=False, auth=auth, timeout=(2, 3)) as r:
         written = 0
         with sftp_client.open(remote_name, "wb") as f:
             f.set_pipelined(pipelined=True)
@@ -78,6 +78,7 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True):
                 written += len(chunk)
                 content_to_write = memoryview(chunk)
                 f.write(content_to_write)
+                print("Written chunk", chunk)
 
         print(f"Written {written} bytes")
         return 0

@@ -4,6 +4,7 @@ import re
 
 from argparse import ArgumentParser
 
+
 def get_config(host, port, login, target):
 
     return {
@@ -20,19 +21,19 @@ def get_config(host, port, login, target):
 if __name__ == "__main__":
 
     parser = ArgumentParser(
-        prog='DAG tester',
-        description='Tests dags in integration env'
+        prog="DAG tester", description="Tests dags in integration env"
     )
 
-    parser.add_argument('--host', default='localhost')
-    parser.add_argument('-p', '--port', type=int, default=2222)
-    parser.add_argument('-u', '--user', default='eflows')
-    parser.add_argument('--target', default='/tmp/myfile')
+    parser.add_argument("--host", default="localhost")
+    parser.add_argument("-p", "--port", type=int, default=2222)
+    parser.add_argument("-u", "--user", default="eflows")
+    parser.add_argument("--target", default="/tmp/myfile")
 
     args = parser.parse_args()
 
-
-    conf = get_config(host=args.host, port=args.port, login=args.user, target=args.target)
+    conf = get_config(
+        host=args.host, port=args.port, login=args.user, target=args.target
+    )
     cfgstr = json.dumps(conf)
 
     res = subprocess.run(

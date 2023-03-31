@@ -84,3 +84,29 @@ class TestHTTP(unittest.TestCase):
         self.assertEqual(r, 0)
         exec.assert_called()
         wrt.assert_called_once_with(memoryview(b"blabla"))
+
+    @patch("utils.file_exist")
+    def test_with_auth(self, exists):
+        exists.return_value = 661
+
+        my_sftp = MagicMock()
+        wrt = MagicMock(return_value=2)
+        my_sftp.open().__enter__().write = wrt
+        my_client = MagicMock()
+        exec = MagicMock()
+        my_client.open_sftp.return_value = my_sftp
+        my_client.exec_command = exec
+
+        r = http2ssh(
+            url="https://httpbin.org/basic-auth/user/pass",
+            auth=("user", "pass"),
+            ssh_client=my_client,
+            remote_name="/foo/bar/",
+            force=True,
+        )
+        self.assertEqual(r, 0)
+        exec.assert_called()
+        wrt.assert_called_once()
+        wrt.assert_called_once_with(
+            memoryview(b'{\n  "authenticated": true, \n  "user": "user"\n}\n')
+        )
