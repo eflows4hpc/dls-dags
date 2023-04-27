@@ -16,13 +16,13 @@ def get_objects(server):
 
 def get_file_list(obj):
     file_url = obj["links"]["files"]
-    fls = requests.get(file_url).json()
+    fls = requests.get(file_url, verify=False).json()
 
     return {it["key"]: it["links"]["self"] for it in fls["contents"]}
 
 
 def get_object_md(server, oid):
-    obj = requests.get(urljoin(server, f"api/records/{oid}")).json()
+    obj = requests.get(urljoin(server, f"api/records/{oid}"), verify=False).json()
     return obj
 
 
