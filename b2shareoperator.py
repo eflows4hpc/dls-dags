@@ -83,6 +83,7 @@ def add_file(record, fname: str, token: str, remote: str):
         params={"access_token": token},
         headers={"Content-Type": "application/octet-stream"},
         data=open(fname, "rb"),
+        verify=False
     )
 
 

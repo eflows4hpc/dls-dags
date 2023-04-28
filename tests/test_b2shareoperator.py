@@ -118,7 +118,7 @@ class B2ShareOperatorTest(unittest.TestCase):
 
         r = dict()
         r["links"] = {"files": server, "self": server}
-        with patch("b2shareoperator.requests.post") as put:
+        with patch("b2shareoperator.requests.put") as put:
             a = tempfile.NamedTemporaryFile()
             a.write(b"some content")
             up = add_file(
