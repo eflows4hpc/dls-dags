@@ -28,7 +28,7 @@ def get_object_md(server, oid):
 
 def download_file(url: str, target_dir: str):
     fname = tempfile.mktemp(dir=target_dir)
-    urllib.request.urlretrieve(url=url, filename=fname)
+    urllib.request.urlretrieve(url=url, filename=fname, verify=False)
     return fname
 
 
@@ -50,7 +50,7 @@ def get_record_template():
 
 
 def get_schema(url):
-    r = requests.get(url)
+    r = requests.get(url, verify=False)
     return r.json()
 
 
@@ -58,6 +58,7 @@ def get_community(server, community_id):
     response = requests.get(
         url=urljoin(server, f"api/communities/{community_id}"),
         headers={"Content-Type": "application/json"},
+        verify=False
     ).json()
     if "status" in response:
         return None
@@ -71,6 +72,7 @@ def create_draft_record(server: str, token: str, record):
         headers={"Content-Type": "application/json"},
         data=json.dumps(record),
         params={"access_token": token},
+        verify=False
     )
     return response.json()
 
@@ -94,6 +96,7 @@ def submit_draft(record, token):
         headers={"Content-Type": "application/json-patch+json"},
         data=json.dumps(pub),
         params={"access_token": token},
+        verify=False
     )
     return response.json()
 
