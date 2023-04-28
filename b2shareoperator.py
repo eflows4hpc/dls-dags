@@ -8,6 +8,9 @@ import requests
 from airflow.models.baseoperator import BaseOperator
 from airflow.providers.http.hooks.http import HttpHook
 
+import ssl
+
+
 
 def get_objects(server):
     lst = requests.get(urljoin(server, "api/records")).json()
@@ -27,8 +30,11 @@ def get_object_md(server, oid):
 
 
 def download_file(url: str, target_dir: str):
+    # this would probably fix the Geant issues once and for all
+    ssl._create_default_https_context = ssl._create_unverified_context
     fname = tempfile.mktemp(dir=target_dir)
-    urllib.request.urlretrieve(url=url, filename=fname, verify=False)
+    # a nice solution to just trust this one cert can be acheived by setting the ssl context here
+    urllib.request.urlretrieve(url=url, filename=fname)
     return fname
 
 
