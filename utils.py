@@ -70,7 +70,7 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
     ssh_client.exec_command(command=f"mkdir -p {dirname}")
     ssh_client.exec_command(command=f"touch {remote_name}")
 
-    with requests.get(url, stream=True, verify=False, auth=auth, timeout=(3, 29)) as r:
+    with requests.get(url, stream=True, verify=False, auth=auth, timeout=(3, 129)) as r:
         written = 0
         with sftp_client.open(remote_name, "wb") as f:
             f.set_pipelined(pipelined=True)
