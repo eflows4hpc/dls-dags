@@ -20,7 +20,7 @@ default_args = {
     tags=["example"],
 )
 def transfer_image():
-    @task
+    @task(retries=3, retry_delay=2, retry_exponential_backoff=True)
     def stream_upload(connection_id, **kwargs):
         params = kwargs["params"]
         force = params.get("force", True)
