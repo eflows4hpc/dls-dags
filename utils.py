@@ -72,7 +72,7 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
 
     with requests.get(url, stream=True, verify=False, auth=auth, timeout=(3, 900)) as r:
         written = 0
-        length = r.headers.get('Content-Length', 0)
+        length = int(r.headers.get('Content-Length', 0))
         with sftp_client.open(remote_name, "wb") as f:
             f.set_pipelined(pipelined=True)
             for chunk in r.iter_content(chunk_size=1024 * 1000):
@@ -84,7 +84,7 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
         if length>0 and written!=length:
             print('Size mismatch')
             r.raise_for_status()
-            
+
         return 0
 
 
