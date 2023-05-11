@@ -81,8 +81,8 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
                 f.write(content_to_write)
 
         print(f"Written {written} bytes. Content-lenght {length}")
-        if length>0 and written!=length:
-            print('Size mismatch')
+        if length>0 and written<length:
+            print(f"Size mismatch {written} < {length}")
             raise Exception('Size copying missmatch')
 
         return 0
