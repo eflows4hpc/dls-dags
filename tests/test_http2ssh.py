@@ -46,6 +46,25 @@ class TestHTTP(unittest.TestCase):
 
     @patch("utils.requests.get")
     @patch("utils.file_exist")
+    def test_size_mismatch_cpy(self, exists, get):
+        exists.return_value = 661
+        my_sftp = MagicMock()
+        wrt = MagicMock(return_value=2)
+        my_sftp.open().__enter__().write = wrt
+        my_client = MagicMock()
+        exec = MagicMock()
+        my_client.open_sftp.return_value = my_sftp
+        my_client.exec_command = exec
+
+        get().__enter__().iter_content = MagicMock(return_value=[b"blabla"])
+        get().__enter__().headers = {'Content-Length': 16}
+        with self.assertRaises(Exception):
+            r = http2ssh(
+                url="foo.bar", ssh_client=my_client, remote_name="/goo/bar", force=True
+            )
+        
+    @patch("utils.requests.get")
+    @patch("utils.file_exist")
     def test_actual_cpy(self, exists, get):
         exists.return_value = 661
         my_sftp = MagicMock()
@@ -57,7 +76,7 @@ class TestHTTP(unittest.TestCase):
         my_client.exec_command = exec
 
         get().__enter__().iter_content = MagicMock(return_value=[b"blabla"])
-        get().__enter__().headers = {'Content-Length': 999}
+        get().__enter__().headers = {'Content-Length': 6}
         r = http2ssh(
             url="foo.bar", ssh_client=my_client, remote_name="/goo/bar", force=True
         )
@@ -78,7 +97,7 @@ class TestHTTP(unittest.TestCase):
         my_client.exec_command = exec
 
         get().__enter__().iter_content = MagicMock(return_value=[b"blabla"])
-        get().__enter__().headers = {'Content-Length': 999}
+        get().__enter__().headers = {'Content-Length': 6}
 
         r = http2ssh(
             url="foo.bar", ssh_client=my_client, remote_name="/goo/bar", force=True
@@ -86,7 +105,7 @@ class TestHTTP(unittest.TestCase):
         self.assertEqual(r, 0)
         exec.assert_called()
         wrt.assert_called_once_with(memoryview(b"blabla"))
-        get().__enter__().raise_for_status.assert_called()
+        
 
     @unittest.skip("httpbin timeouts")
     @patch("utils.file_exist")
