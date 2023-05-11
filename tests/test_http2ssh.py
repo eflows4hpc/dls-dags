@@ -57,6 +57,7 @@ class TestHTTP(unittest.TestCase):
         my_client.exec_command = exec
 
         get().__enter__().iter_content = MagicMock(return_value=[b"blabla"])
+        get().__enter__().headers = {'Content-Length': 999}
         r = http2ssh(
             url="foo.bar", ssh_client=my_client, remote_name="/goo/bar", force=True
         )
@@ -77,6 +78,7 @@ class TestHTTP(unittest.TestCase):
         my_client.exec_command = exec
 
         get().__enter__().iter_content = MagicMock(return_value=[b"blabla"])
+        get().__enter__().headers = {'Content-Length': 999}
 
         r = http2ssh(
             url="foo.bar", ssh_client=my_client, remote_name="/goo/bar", force=True
@@ -84,6 +86,7 @@ class TestHTTP(unittest.TestCase):
         self.assertEqual(r, 0)
         exec.assert_called()
         wrt.assert_called_once_with(memoryview(b"blabla"))
+        get().__enter__().raise_for_status.assert_called()
 
     @unittest.skip("httpbin timeouts")
     @patch("utils.file_exist")
