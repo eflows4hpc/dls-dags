@@ -1,12 +1,9 @@
 import json
 import os
-import shutil
 import tempfile
 
 from airflow.decorators import dag, task
-from airflow.exceptions import AirflowNotFoundException
 from airflow.models import Variable
-from airflow.models.connection import Connection
 from airflow.models.param import Param
 from airflow.operators.python import PythonOperator
 import pendulum
@@ -30,7 +27,7 @@ def mlflow_upload_model():
         target = Variable.get("working_dir", default_var="/tmp/")
         temp_dir = tempfile.mkdtemp(dir=target)
 
-        ssh_hook = get_connection(conn_id=connection_id, **content)
+        ssh_hook = get_connection(conn_id=connection_id, **context)
         sftp_client = ssh_hook.get_conn().open_sftp()
 
         content = {}
@@ -65,7 +62,7 @@ def mlflow_upload_model():
         return content
 
     @task.virtualenv(requirements=["mlflow==2.3.2"])
-    def upl(attrs):
+    def uploat_to_mlflow(attrs):
         from utils import get_mlflow_client, upload_metrics
         import shutil
         import tempfile
@@ -102,7 +99,8 @@ def mlflow_upload_model():
             text="This experiment was created by DLS",
             artifact_file="model/meta.txt",
         )
-        shutil.rmtree(path=attrs["temp_dir"])
+        if 'temp_dir' in attrs:
+            shutil.rmtree(path=attrs["temp_dir"])
 
     setup_task = PythonOperator(python_callable=setup, task_id="setup_connection")
     a_id = setup_task.output["return_value"]
@@ -113,7 +111,7 @@ def mlflow_upload_model():
         python_callable=remove, op_kwargs={"conn_id": a_id}, task_id="cleanup"
     )
 
-    setup_task >> attrs >> upl(attrs) >> cleanup_task
+    setup_task >> attrs >> uploat_to_mlflow(attrs) >> cleanup_task
 
 
 dag = mlflow_upload_model()

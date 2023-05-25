@@ -190,3 +190,36 @@ class TestADag(unittest.TestCase):
         assert ti.state == TaskInstanceState.SUCCESS
         print(ti.xcom_pull(key="return_value"))
         self.assertDictEqual({"bla": "a", "foo": "b"}, ti.xcom_pull(key="return_value"))
+
+    @patch("utils.get_mlflow_client")
+    @patch("decors.get_connection")
+    @patch("utils.file_exist")
+    def test_meta_transfer(self, fe, get, mlclient):
+        fe.return_value = False
+       
+        get.get_conn().__enter__().open_sftp().return_value = None
+
+        dagbag = DagBag(".")
+        dag = dagbag.get_dag(dag_id="mlflow_upload_model")
+        dagrun = dag.create_dagrun(
+            state=DagRunState.RUNNING, run_id=RUN_ID, run_type=DagRunType.MANUAL, conf={"location": ".tmp",}
+        )
+        ti = dagrun.get_task_instance(task_id="download_artifacts")
+        ti.task = dag.get_task(task_id="download_artifacts")
+        ti.task.op_kwargs = {"connection_id": 2929}
+
+        ti.run(ignore_all_deps=True, ignore_ti_state=True, test_mode=True)
+        ret = ti.xcom_pull(key="return_value")
+        self.assertIn('temp_dir', ret)
+
+        mlclient.return_value = MagicMock()
+
+        ti = dagrun.get_task_instance(task_id="uploat_to_mlflow")
+        ti.task = dag.get_task(task_id="uploat_to_mlflow")
+        ti.task.op_kwargs = {"connection_id": 2929}
+
+        ti.run(ignore_all_deps=True, ignore_ti_state=True, test_mode=True)
+        ret = ti.xcom_pull(key="return_value")
+        
+
+
