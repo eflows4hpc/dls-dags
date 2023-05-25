@@ -3,7 +3,7 @@ from io import BytesIO
 
 from airflow.decorators import dag, task
 from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
+import pendulum
 
 from decors import get_connection, get_parameter, remove, setup
 from utils import (
@@ -21,8 +21,8 @@ default_args = {
 
 @dag(
     default_args=default_args,
-    schedule_interval=None,
-    start_date=days_ago(2),
+    schedule=None,
+    start_date=pendulum.yesterday(),
     tags=["wp6", "UCIS4EQ"],
 )
 def webdav_stagein():

@@ -30,7 +30,7 @@ def get_hook(clazz, conn_id):
 
 @dag(
     default_args=default_args,
-    schedule_interval=None,
+    schedule=None,
     start_date=pendulum.yesterday(),
     tags=["tester"],
     catchup=False,

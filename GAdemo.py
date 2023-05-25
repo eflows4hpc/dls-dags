@@ -4,7 +4,7 @@ from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 from airflow.sensors.filesystem import FileSensor
-from airflow.utils.dates import days_ago
+import pendulum
 
 def_args = {
     "owner": "airflow",
@@ -24,8 +24,8 @@ with DAG(
     "GAtest",
     default_args=def_args,
     description="testing GA",
-    schedule_interval=timedelta(days=1),
-    start_date=days_ago(2),
+    schedule=timedelta(days=1),
+    start_date=pendulum.today('UTC'),
 ) as dag:
     s1 = FileSensor(task_id="file_sensor", filepath="/work/afile.txt")
     t1 = BashOperator(task_id="move_data", bash_command="date")

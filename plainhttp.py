@@ -1,7 +1,7 @@
 from airflow.decorators import dag, task
 from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
-
+import pendulum
+from airflow.models.param import Param
 from decors import get_connection, remove, setup
 from utils import http2ssh
 
@@ -12,9 +12,15 @@ default_args = {
 
 @dag(
     default_args=default_args,
-    schedule_interval=None,
-    start_date=days_ago(2),
+    schedule=None,
+    start_date=pendulum.today("UTC"),
     tags=["wp4", "http", "ssh"],
+    params={
+        "force": Param(True, type="boolean"),
+        "target": Param("/tmp/", type="string"),
+        "url": Param("", type="string")
+        }
+
 )
 def plainhttp2ssh():
     @task

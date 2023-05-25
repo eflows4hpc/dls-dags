@@ -7,7 +7,7 @@ from airflow.models import Variable
 from airflow.models.connection import Connection
 from airflow.operators.python import get_current_context
 from airflow.providers.ssh.operators.ssh import SSHOperator
-from airflow.utils.dates import days_ago
+import pendulum
 from datacat_integration.connection import DataCatalogEntry
 from datacat_integration.hooks import DataCatalogHook
 
@@ -50,8 +50,8 @@ default_args = {
 
 @dag(
     default_args=default_args,
-    schedule_interval=None,
-    start_date=days_ago(2),
+    schedule=None,
+    start_date=pendulum.today('UTC'),
     tags=["example", "docker", "datacat"],
 )
 def docker_in_worker():

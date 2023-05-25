@@ -3,8 +3,8 @@ from urllib.parse import urljoin
 
 from airflow.decorators import dag, task
 from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
-
+from airflow.models.param import Param
+import pendulum
 from decors import get_connection, remove, setup, get_creds_from_vault_path
 import requests
 from utils import file_exist
@@ -56,9 +56,16 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
 
 @dag(
     default_args=default_args,
-    schedule_interval=None,
-    start_date=days_ago(2),
+    schedule=None,
+    start_date=pendulum.yesterday('UTC'),
     tags=["example"],
+    params={
+        "force": Param(True, type="boolean"),
+        "target": Param("/tmp/", type="string"),
+        "image_id": Param("wordcount_skylake.sif", type="string"),
+        "url": Param("https://bscgrid20.bsc.es/image_creation/images/download/", type="string"),
+        "vault_path": Param("", type="string")
+        }
 )
 def transfer_image():
     

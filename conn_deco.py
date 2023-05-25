@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from airflow.decorators import dag, task
 from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
+import pendulum
 
 from decors import get_connection, remove, setup
 
@@ -18,8 +18,8 @@ def_args = {
 
 @dag(
     default_args=def_args,
-    schedule_interval=None,
-    start_date=days_ago(2),
+    schedule=None,
+    start_date=pendulum.today('UTC'),
     tags=["example"],
 )
 def conn_decorator():

@@ -7,7 +7,8 @@ from airflow.exceptions import AirflowNotFoundException
 from airflow.models import Variable
 from airflow.models.connection import Connection
 from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
+from airflow.models.param import Param
+import pendulum
 
 from decors import get_connection, remove, setup
 from utils import LFSC, RFSC, ssh_download, walk_dir
@@ -84,9 +85,12 @@ def transfer_model(local_client, remote_client):
 
 @dag(
     default_args=default_args,
-    schedule_interval=None,
-    start_date=days_ago(2),
+    schedule=None,
+    start_date=pendulum.today(),
     tags=["example", "model repo"],
+    params={
+        "source": Param("/tmp/", type="string"),
+     }
 )
 def mlflow_model_transfer():
     @task()

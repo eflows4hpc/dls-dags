@@ -5,13 +5,14 @@ from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.models.connection import Connection
 from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
+import pendulum
 from datacat_integration.connection import DataCatalogEntry
 from datacat_integration.hooks import DataCatalogHook
 
 from b2shareoperator import add_file, create_draft_record, get_community, submit_draft
 from decors import get_connection, get_parameter, remove, setup
 from utils import ssh2local_copy
+from airflow.models.param import Param
 
 default_args = {
     "owner": "airflow",
@@ -37,9 +38,14 @@ def create_template(hrespo):
 
 @dag(
     default_args=default_args,
-    schedule_interval=None,
-    start_date=days_ago(2),
+    schedule=None,
+    start_date=pendulum.today(),
     tags=["example"],
+    params={
+        "source": Param("/tmp/", type="string"),
+        "mid": Param("", description="id of the metadata template in datacat", type="string"),
+        "register": Param(False, description="register to data cat?", type="boolean")
+    }
 )
 def upload_example():
     @task()

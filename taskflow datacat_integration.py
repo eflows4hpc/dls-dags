@@ -5,7 +5,7 @@ from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.models.connection import Connection
 from airflow.providers.ssh.hooks.ssh import SSHHook
-from airflow.utils.dates import days_ago
+import pendulum
 
 from b2shareoperator import download_file, get_file_list, get_object_md, get_objects
 
@@ -14,8 +14,8 @@ default_args = {"owner": "airflow"}
 
 @dag(
     default_args=default_args,
-    schedule_interval=None,
-    start_date=days_ago(2),
+    schedule=None,
+    start_date=pendulum.today(),
     tags=["example", "datacat_integration"],
 )
 def taskflow_datacat_integration():
