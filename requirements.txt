@@ -6,3 +6,4 @@ plyvel
 webdavclient3
 --index-url https://gitlab.jsc.fz-juelich.de/api/v4/projects/4405/packages/pypi/simple
 airflow-datacat-integration>=0.1.4
+virtualenv
