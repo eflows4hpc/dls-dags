@@ -1,6 +1,7 @@
 import unittest
 from collections import namedtuple
-from unittest.mock import create_autospec
+from unittest.mock import MagicMock, create_autospec
+from utils import upload_metrics
 
 
 try:
@@ -21,6 +22,17 @@ Artifact = namedtuple("Artifact", ["path"])
 
 
 class TestModels(unittest.TestCase):
+    def test_conv(self):
+        md = {
+            "params": {"C": 20.1, "layers": 11, "function": "relu",},
+            "metrics": {"MSE": 11.1, "G": 18},
+        }
+        client = MagicMock()
+        client.log_metric = MagicMock()
+        client.log_param = MagicMock()
+        upload_metrics(runid="run", mlflow_client=client, metadata=md)
+        client.log_metric.assert_called()
+        client.log_param.assert_called()
 
     # @patch('image_transfer.file_exist')
     def test_transfer(self):

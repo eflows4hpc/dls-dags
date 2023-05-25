@@ -8,6 +8,38 @@ import requests
 from airflow.models.connection import Connection
 from datacat_integration.hooks import DataCatalogHook
 from webdav3.client import Client
+from airflow.exceptions import AirflowNotFoundException
+
+
+def get_mlflow_client():
+    try:
+        from mlflow.client import MlflowClient
+    except ImportError:
+        print("Unable to import mlflow")
+
+    try:
+        connection = Connection.get_connection_from_secrets("my_mlflow")
+    except AirflowNotFoundException as _:
+        print("Please define the mlflow connection 'my_mlflow'")
+        return MlflowClient()
+
+    mlflow_url = f"http://{connection.host}:{connection.port}"
+    print("Will be using remote mlflow @", mlflow_url)
+    remote_client = MlflowClient(tracking_uri=mlflow_url, registry_uri=mlflow_url)
+    return remote_client
+
+
+def upload_metrics(mlflow_client, metadata, runid):
+    metrics = metadata.get("metrics")
+    if metrics:
+        for metric_name, metric_value in metrics.items():
+            print("Logging metric", metric_name)
+            mlflow_client.log_metric(run_id=runid, key=metric_name, value=metric_value)
+
+    params = metadata.get("params")
+    if params:
+        for param_name, param_value in params.items():
+            mlflow_client.log_param(run_id=runid, key=param_name, value=param_value)
 
 
 def ssh2local_copy(ssh_hook, source: str, target: str):
@@ -72,7 +104,7 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
 
     with requests.get(url, stream=True, verify=False, auth=auth, timeout=(3, 900)) as r:
         written = 0
-        length = int(r.headers.get('Content-Length', 0))
+        length = int(r.headers.get("Content-Length", 0))
         with sftp_client.open(remote_name, "wb") as f:
             f.set_pipelined(pipelined=True)
             for chunk in r.iter_content(chunk_size=1024 * 1000):
@@ -81,9 +113,9 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
                 f.write(content_to_write)
 
         print(f"Written {written} bytes. Content-lenght {length}")
-        if length>0 and written<length:
+        if length > 0 and written < length:
             print(f"Size mismatch {written} < {length}")
-            raise Exception('Size copying missmatch')
+            raise Exception("Size copying missmatch")
 
         return 0
 

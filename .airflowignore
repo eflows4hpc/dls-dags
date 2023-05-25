@@ -1,0 +1,6 @@
+env/*
+test_tags_delete_or_archive_later/*
+docs/*
+tests/*
+__pycache__/*
+airflow/*
