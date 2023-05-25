@@ -206,7 +206,7 @@ class TestADag(unittest.TestCase):
         )
         ti = dagrun.get_task_instance(task_id="download_artifacts")
         ti.task = dag.get_task(task_id="download_artifacts")
-        ti.task.op_kwargs = {"connection_id": 2929}
+        #ti.task.op_kwargs = {"connection_id": 2929}
 
         ti.run(ignore_all_deps=True, ignore_ti_state=True, test_mode=True)
         ret = ti.xcom_pull(key="return_value")
