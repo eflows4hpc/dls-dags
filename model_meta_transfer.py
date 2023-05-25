@@ -61,7 +61,8 @@ def mlflow_upload_model():
         content["temp_dir"] = temp_dir
         return content
 
-    @task.virtualenv(requirements=["mlflow==2.3.2"])
+    #@task.virtualenv(requirements=["mlflow==2.3.2"])
+    @task
     def uploat_to_mlflow(attrs):
         from utils import get_mlflow_client, upload_metrics
         import shutil
