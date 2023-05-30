@@ -43,7 +43,12 @@ jobs:
         run: |
            docker ps -a
            did=`docker ps -f "ancestor=lscr.io/linuxserver/openssh-server" --format '{{ .ID }} '`
-           docker exec $did chown eflows /tmps/
+           docker exec $did chown -R eflows /tmps/
+           docker exec $did mkdir /tmps/source /tmps/target /tmps/source/sub
+           docker exec $did echo "Some random text" > /tmps/source/some1
+           docker exec $did echo "Some random other text" > /tmps/source/some2
+           docker exec $did echo "Some random other other text" > /tmps/source/sub/some12
+           docker exec $did chown -R eflows /tmps/
 
       - name: Connect to ssh
         run: |

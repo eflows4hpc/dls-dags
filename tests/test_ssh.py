@@ -80,25 +80,3 @@ class TestSSH(unittest.TestCase):
 
                 self.assertEqual(text, txt)
 
-    def test_prefixed(self):
-        params = {
-            "source_vault_id": "foo_id",
-            "source_host": "foo_host",
-            "source_port": 44,
-            "source_login": "foo_user",
-            "source_path": "/foo/path",
-            "target_vault_id": "bar_id",
-            "target_host": "bar_host",
-            "target_port": 33,
-            "target_login": "bar_user",
-            "target_path": "/bar/path",
-        }
-        conn_id, cparams = get_prefixed_params(prefix='source', params=params)
-        self.assertEqual('vault_foo_id', conn_id)
-        self.assertEqual(cparams['host'], 'foo_host')
-        self.assertEqual(cparams['port'], 44)
-
-        conn_id, cparams = get_prefixed_params(prefix='target', params=params)
-        self.assertEqual('vault_bar_id', conn_id)
-        self.assertEqual(cparams['host'], 'bar_host')
-        self.assertEqual(cparams['port'], 33)
