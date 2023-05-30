@@ -61,11 +61,6 @@ jobs:
       - name: SSH2SSH test
         run: |
           pwd
-          mkdir /home/runner/sshdir/sshdir/source /home/runner/sshdir/sshdir/target /home/runner/sshdir/sshdir/source/sub
-          echo "Some random text" > /home/runner/sshdir/sshdir/source/some1
-          echo "Some random other text" > /home/runner/sshdir/sshdir/source/some2
-          echo "Some random other other text" > /home/runner/sshdir/sshdir/source/sub/some12
-          
           airflow dags test ssh2ssh -c '{"source_connection_id": "sshx_server", "source_path": "/tmps/source/", "target_connection_id": "sshx_server", "target_path": "/tmps/target/"}'
           
 
