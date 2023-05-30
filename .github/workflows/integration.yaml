@@ -5,6 +5,7 @@ on: [push]
 env:
   AIRFLOW__CORE__DAGS_FOLDER: $GITHUB_WORKSPACE 
   AIRFLOW__CORE__LOAD_EXAMPLES: False
+  AIRFLOW_CONN_SSHX_SERVER: 'ssh://eflows@0.0.0.0:2222?private_key=-----BEGIN+OPENSSH+PRIVATE+KEY-----%0Ab3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAlwAAAAdzc2gtcn%0ANhAAAAAwEAAQAAAIEAuq%2Bua51m1MHDqdSgZ2w%2FoJOcQrAyXMUUAtDNi7%2FOyyrVDMqHp3rR%0AuNGCuzKhztwwQ8ATtoHtQADH%2FCYw8%2FT1EtaDPSvqZRmWHEujPTwsrgtulpRkBcaMO35lB2%0AfENBMLRgA9cmmyTcduTqnbYL7UdMKoYhcw0yTgLlNK9H0vnbUAAAIA%2B0Tb%2FftE2%2F0AAAAH%0Ac3NoLXJzYQAAAIEAuq%2Bua51m1MHDqdSgZ2w%2FoJOcQrAyXMUUAtDNi7%2FOyyrVDMqHp3rRuN%0AGCuzKhztwwQ8ATtoHtQADH%2FCYw8%2FT1EtaDPSvqZRmWHEujPTwsrgtulpRkBcaMO35lB2fE%0ANBMLRgA9cmmyTcduTqnbYL7UdMKoYhcw0yTgLlNK9H0vnbUAAAADAQABAAAAgQCvBjSNuk%0AWFZKBP4gP80rUYlCulLlIZPb%2FUH%2FUFd2%2BmdOLHmj3yXCixkONzJDYlnbQ2YKdarZdEMTdN%0AhHTS067LPzBJ0wOwt%2BQ2ZoVnJ%2F%2FGlp1JoYX4ldEfGT0Ihmqn3wJscHwIGeWbM4AD%2FZIa9H%0A8BnMWq8d4x7W4aLOd11xxpYQAAAEALdgo2Ti1lmq9rmyAj8s5OjeJxwzdFUsuMPAGgD%2BD4%0AqowTAehb7aLqkjtZyJn2HliLVODrNohW%2BuFsciQsaRLmAAAAQQDkycH%2BAJ7kHW4wcb8RLr%0A%2FHU52EVKIcCv0bwqwnATKQIbz8fqCldhdD8O47rpBsD7Iyvp9PDjPFTiBXhBfqwGydAAAA%0AQQDQ4%2FzEgPFngsuI%2Be4j1H4oSmLgAXsw1kcDNYq7a%2FJK7R7kGnIhPX7tI0qiFrq0h9iKip%0AiKOaW0KG6obaAX6g35AAAACWpqQGpqLTkwOAE%3D%0A-----END+OPENSSH+PRIVATE+KEY-----%0A'
 
 jobs:
   runner-job:
@@ -51,5 +52,16 @@ jobs:
           ls /home/runner/sshdir/sshdir
           cat /home/runner/sshdir/sshdir/file
           diff /home/runner/sshdir/sshdir/file data.txt
+
+      - name: SSH2SSH test
+        run: |
+          pwd
+          mkdir /home/runner/sshdir/sshdir/source /home/runner/sshdir/sshdir/target /home/runner/sshdir/sshdir/source/sub
+          echo "Some random text" > /home/runner/sshdir/sshdir/source/some1
+          echo "Some random other text" > /home/runner/sshdir/sshdir/source/some2
+          echo "Some random other other text" > /home/runner/sshdir/sshdir/source/sub/some12
+          
+          airflow dags test ssh2ssh -c '{"source_connection_id": "sshx_server", "source_path": "/tmps/source/", "target_connection_id": "sshx_server", "target_path": "/tmps/target/"}'
+          
 
 
