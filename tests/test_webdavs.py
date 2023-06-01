@@ -118,7 +118,7 @@ class TestWebDAV(unittest.TestCase):
     def test_resolve(self, hook):
 
         ret = resolve_oid(oid=777)
-        self.assertEqual(ret, (-1, -1))
+        self.assertEqual(ret, ("default_webdav", "dls"))
 
         mm = MagicMock()
         mm.get_entry.return_value = json.dumps(
@@ -128,3 +128,5 @@ class TestWebDAV(unittest.TestCase):
 
         ret = resolve_oid(oid=777)
         self.assertEqual(ret, ("foo.bar", "/foo/bar/"))
+
+
