@@ -147,6 +147,13 @@ def get_webdav_prefix(client, dirname):
 
     return prefix
 
+def mkdir_rec(client, path):
+    #check if exist
+    if client.check(path):
+        return
+    parent, chlid = os.path.split(path)
+    mkdir_rec(client=client, path=parent)
+    client.mkdir(path)
 
 def walk_dir(client, path, prefix):
     for p in client.list(path, get_info=True):
@@ -185,15 +192,15 @@ class RFSC(object):
         ]
 
 
-def resolve_oid(oid):
-    hook = DataCatalogHook()
+def resolve_oid(oid:str, type:str='dataset'):
     try:
-        entry = json.loads(hook.get_entry("dataset", oid))
+        hook = DataCatalogHook()
+        entry = json.loads(hook.get_entry(type, oid))
         webdav_connid = urlparse(entry["url"]).netloc
         print("Will be using webdav connection", webdav_connid)
         dirname = entry["metadata"]["path"]
         print(f"Processing webdav dir: {dirname}")
         return webdav_connid, dirname
     except Exception as e:
-        print(f"No entry {oid} in data cat found. Or entry invalid. {e}")
-        return -1, -1
+        print(f"No entry {type}/{oid} in data cat found. Or entry invalid. {e}")
+        return "default_webdav", "dls"
