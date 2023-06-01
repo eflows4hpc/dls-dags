@@ -46,7 +46,7 @@ class TestADag(unittest.TestCase):
         dag = self.dagbag.get_dag(dag_id="plainhttp2ssh")
         self.assertIsNotNone(dag)
         print(dag.task_ids)
-        self.assertTrue(len(dag.tasks), 2)
+        self.assertEqual(len(dag.tasks), 3)
 
         dagrun = dag.create_dagrun(
             state=DagRunState.RUNNING, run_id=RUN_ID, run_type=DagRunType.MANUAL,
@@ -79,7 +79,7 @@ class TestADag(unittest.TestCase):
         dag = dagbag.get_dag(dag_id="plainhttp2ssh")
         self.assertIsNotNone(dag)
         print(dag.task_ids)
-        self.assertTrue(len(dag.tasks), 2)
+        self.assertEqual(len(dag.tasks), 3)
 
         dagrun = dag.create_dagrun(
             state=DagRunState.RUNNING,
@@ -98,12 +98,12 @@ class TestADag(unittest.TestCase):
         dag = self.dagbag.get_dag(dag_id="webdav_stagein")
         self.assertIsNotNone(dag)
         print(dag.task_ids)
-        self.assertTrue(len(dag.tasks), 3)
+        self.assertEqual(len(dag.tasks), 3)
 
     def test_testdag(self):
         dag = self.dagbag.get_dag(dag_id="testdag")
         self.assertIsNotNone(dag)
-        self.assertTrue(len(dag.tasks), 3)
+        self.assertEqual(len(dag.tasks), 2)
 
         # dagrun = dag.run(local=True)
 
@@ -125,7 +125,7 @@ class TestADag(unittest.TestCase):
         dag = dagbag.get_dag(dag_id="upload_example")
 
         self.assertIsNotNone(dag)
-        self.assertTrue(len(dag.tasks), 3)
+        self.assertEqual(len(dag.tasks), 5)
 
         dagrun = dag.create_dagrun(
             state=DagRunState.RUNNING, run_id=RUN_ID, run_type=DagRunType.MANUAL,
