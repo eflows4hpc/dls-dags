@@ -6,6 +6,7 @@ env:
   AIRFLOW__CORE__DAGS_FOLDER: $GITHUB_WORKSPACE 
   AIRFLOW__CORE__LOAD_EXAMPLES: False
   AIRFLOW_CONN_SSHX_SERVER: 'ssh://eflows@0.0.0.0:2222?private_key=-----BEGIN+OPENSSH+PRIVATE+KEY-----%0Ab3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAlwAAAAdzc2gtcn%0ANhAAAAAwEAAQAAAIEAuq%2Bua51m1MHDqdSgZ2w%2FoJOcQrAyXMUUAtDNi7%2FOyyrVDMqHp3rR%0AuNGCuzKhztwwQ8ATtoHtQADH%2FCYw8%2FT1EtaDPSvqZRmWHEujPTwsrgtulpRkBcaMO35lB2%0AfENBMLRgA9cmmyTcduTqnbYL7UdMKoYhcw0yTgLlNK9H0vnbUAAAIA%2B0Tb%2FftE2%2F0AAAAH%0Ac3NoLXJzYQAAAIEAuq%2Bua51m1MHDqdSgZ2w%2FoJOcQrAyXMUUAtDNi7%2FOyyrVDMqHp3rRuN%0AGCuzKhztwwQ8ATtoHtQADH%2FCYw8%2FT1EtaDPSvqZRmWHEujPTwsrgtulpRkBcaMO35lB2fE%0ANBMLRgA9cmmyTcduTqnbYL7UdMKoYhcw0yTgLlNK9H0vnbUAAAADAQABAAAAgQCvBjSNuk%0AWFZKBP4gP80rUYlCulLlIZPb%2FUH%2FUFd2%2BmdOLHmj3yXCixkONzJDYlnbQ2YKdarZdEMTdN%0AhHTS067LPzBJ0wOwt%2BQ2ZoVnJ%2F%2FGlp1JoYX4ldEfGT0Ihmqn3wJscHwIGeWbM4AD%2FZIa9H%0A8BnMWq8d4x7W4aLOd11xxpYQAAAEALdgo2Ti1lmq9rmyAj8s5OjeJxwzdFUsuMPAGgD%2BD4%0AqowTAehb7aLqkjtZyJn2HliLVODrNohW%2BuFsciQsaRLmAAAAQQDkycH%2BAJ7kHW4wcb8RLr%0A%2FHU52EVKIcCv0bwqwnATKQIbz8fqCldhdD8O47rpBsD7Iyvp9PDjPFTiBXhBfqwGydAAAA%0AQQDQ4%2FzEgPFngsuI%2Be4j1H4oSmLgAXsw1kcDNYq7a%2FJK7R7kGnIhPX7tI0qiFrq0h9iKip%0AiKOaW0KG6obaAX6g35AAAACWpqQGpqLTkwOAE%3D%0A-----END+OPENSSH+PRIVATE+KEY-----%0A'
+  AIRFLOW_CONN_DEFAULT_WEBDAV: 'https://alice:secret1234@0.0.0.0/'
 
 jobs:
   runner-job:
@@ -22,7 +23,17 @@ jobs:
            PASSWORD_ACCESS: false
            PUBLIC_KEY: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC6r65rnWbUwcOp1KBnbD+gk5xCsDJcxRQC0M2Lv87LKtUMyoenetG40YK7MqHO3DBDwBO2ge1AAMf8JjDz9PUS1oM9K+plGZYcS6M9PCyuC26WlGQFxow7fmUHZ8Q0EwtGAD1yabJNx25OqdtgvtR0wqhiFzDTJOAuU0r0fS+dtQ=="
            USER_NAME: eflows
-        
+
+      webdav-server:
+        image: k3vmcd/webdav:latest
+        ports: 443:443
+        volumes:
+          - /home/runner/webdav/:/var/lib/dav/
+        env:
+           AUTH_TYPE: Basic
+           USERNAME: alice
+           PASSWORD: secret1234
+           SSL_CERT: selfsigned
 
     steps:
       - uses: actions/checkout@v3
@@ -62,6 +73,9 @@ jobs:
         run: |
           pwd
           airflow dags test ssh2ssh -c '{"source_connection_id": "sshx_server", "source_path": "/tmps/source/", "target_connection_id": "sshx_server", "target_path": "/tmps/target/"}'
-          
+      - name: WebDav test
+        run: |
+           airflow dags test webdav_stageout -c '{"connection_id": "sshx_server", "path":"/tmp/source/", "verify_webdav_cert": false }' 
+           ls /home/runner/webdav/
 
 

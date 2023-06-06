@@ -203,4 +203,4 @@ def resolve_oid(oid:str, type:str='dataset'):
         return webdav_connid, dirname
     except Exception as e:
         print(f"No entry {type}/{oid} in data cat found. Or entry invalid. {e}")
-        return "default_webdav", "dls"
+        return "default_webdav", "dls/"
