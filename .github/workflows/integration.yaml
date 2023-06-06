@@ -26,7 +26,8 @@ jobs:
 
       webdav-server:
         image: k3vmcd/webdav:latest
-        ports: 443:443
+        ports: 
+          - 443:443
         volumes:
           - /home/runner/webdav/:/var/lib/dav/
         env:
