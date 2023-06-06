@@ -61,6 +61,9 @@ jobs:
            docker exec $did /bin/sh -c 'echo "Some random other text" > /tmps/source/some2'
            docker exec $did /bin/sh -c 'echo "Some random other other text" > /tmps/source/sub/some12'
            docker exec $did chown -R eflows /tmps/
+           did=`docker ps -f "ancestor=k3vmcd/webdav:latest" --format '{{ .ID }} '`
+           docker exec $did /bin/sh -c 'mkdir -p /var/lib/dav/data/dls'
+           docker exec $did /bin/sh -c 'chown -R  www-data /var/lib/dav/data/dls'
 
       - name: Connect to ssh
         run: |
