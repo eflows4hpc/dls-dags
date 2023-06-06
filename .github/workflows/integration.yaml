@@ -79,7 +79,7 @@ jobs:
           airflow dags test ssh2ssh -c '{"source_connection_id": "sshx_server", "source_path": "/tmps/source/", "target_connection_id": "sshx_server", "target_path": "/tmps/target/"}'
       - name: WebDav test
         run: |
-           airflow dags test webdav_stageout -c '{"connection_id": "sshx_server", "path":"/tmp/source/", "verify_webdav_cert": false }' 
+           airflow dags test webdav_stageout -c '{"connection_id": "sshx_server", "path":"/tmps/source/", "verify_webdav_cert": false }' 
            ls /home/runner/webdav/
 
 
