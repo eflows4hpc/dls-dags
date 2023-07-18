@@ -4,6 +4,7 @@ from io import BytesIO
 from airflow.decorators import dag, task
 from airflow.operators.python import PythonOperator
 import pendulum
+from airflow.models.param import Param
 
 from decors import get_connection, get_parameter, remove, setup
 from utils import (
@@ -24,6 +25,14 @@ default_args = {
     schedule=None,
     start_date=pendulum.yesterday(),
     tags=["wp6", "UCIS4EQ"],
+    params={
+        "vault_id": Param(default="", type="string"),
+        "host": Param(default="", type="string"),
+        "port": Param(type="integer", default=22),
+        "login": Param(default="", type="string"),
+        "target": Param("/tmp/", type="string"),
+        "oid": Param("", description="id of the dataset in datacat", type="string")
+}
 )
 def webdav_stagein():
     @task()

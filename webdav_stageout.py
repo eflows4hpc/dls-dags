@@ -44,11 +44,10 @@ def webdav_stageout():
         
         client = get_webdav_client(webdav_connid=webdav_connid)
         client.verify = get_parameter(parameter="verify_webdav_cert", default=True, **context)
-        print("Will be using: ", client.get_url(''), "--> ", dirname,'-->', client.list(''))
-
+        
         prefix = get_webdav_prefix(client=client, dirname=dirname)
         if not prefix:
-            print("Unable to determine common prefix, quitting")
+            print("Unable to determine common prefix")
 
         print(f"Determined common prefix: {prefix}")
 
@@ -71,7 +70,6 @@ def webdav_stageout():
                 sftp_client.get(remotepath=fname, localpath=tmp.name)
 
                 directory, fl = os.path.split(fname[len(params["path"])+1:])
-                print("Directory: ", directory, "fname:", fl, "weddav dir:", dirname)
                 remote_path = os.path.join(dirname, directory)
                 mkdir_rec(client=client, path=remote_path)
 

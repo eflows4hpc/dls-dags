@@ -80,6 +80,6 @@ jobs:
       - name: WebDav test
         run: |
            airflow dags test webdav_stageout -c '{"connection_id": "sshx_server", "path":"/tmps/source/", "verify_webdav_cert": false }' 
-           ls /home/runner/webdav/
+           ls /home/runner/webdav/data/
 
 
