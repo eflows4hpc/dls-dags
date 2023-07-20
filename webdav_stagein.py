@@ -55,7 +55,7 @@ def webdav_stagein():
         prefix = get_webdav_prefix(client=client, dirname=dirname)
         if not prefix:
             print("Unable to determine common prefix, quitting")
-            return -1
+            return connection_id
 
         print(f"Determined common prefix: {prefix}")
 
@@ -67,9 +67,10 @@ def webdav_stagein():
             # check dir?
             ssh_client.exec_command(command=f"mkdir -p {target}")
             for fname in walk_dir(client=client, prefix=prefix, path=dirname):
-                print(f"Processing {fname}")
+                
                 target_path = os.path.join(target, fname)
                 dirname = os.path.dirname(target_path)
+                print(f"Processing {fname} --> ({dirname}) ({target_path})")
                 ssh_client.exec_command(command=f"mkdir -p {dirname}")
                 # safety measure
                 ssh_client.exec_command(command=f"touch {target_path}")
