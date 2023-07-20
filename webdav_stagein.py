@@ -69,9 +69,9 @@ def webdav_stagein():
             for fname in walk_dir(client=client, prefix=prefix, path=dirname):
                 
                 target_path = os.path.join(target, fname)
-                dirname = os.path.dirname(target_path)
-                print(f"Processing {fname} --> ({dirname}) ({target_path})")
-                ssh_client.exec_command(command=f"mkdir -p {dirname}")
+                target_dirname = os.path.dirname(target_path)
+                print(f"Processing {fname} --> ({target_dirname}) ({target_path})")
+                ssh_client.exec_command(command=f"mkdir -p {target_dirname}")
                 # safety measure
                 ssh_client.exec_command(command=f"touch {target_path}")
 
