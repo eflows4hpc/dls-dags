@@ -102,7 +102,7 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
     ssh_client.exec_command(command=f"mkdir -p {dirname}")
     ssh_client.exec_command(command=f"touch {remote_name}")
 
-    with requests.get(url, stream=True, verify=False, auth=auth, timeout=(3, 900)) as r:
+    with requests.get(url, stream=True, verify=False, auth=auth) as r:
         written = 0
         length = int(r.headers.get("Content-Length", 0))
         with sftp_client.open(remote_name, "wb") as f:
@@ -159,7 +159,7 @@ def walk_dir(client, path, prefix):
     for p in client.list(path, get_info=True):
         curr_name = p["path"]
         if curr_name.startswith(prefix):
-            curr_name = curr_name[len(prefix) :]
+            curr_name = curr_name[len(prefix):]
 
         if curr_name == path:
             continue

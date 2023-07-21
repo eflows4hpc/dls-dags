@@ -1,9 +1,10 @@
 import os
 from io import BytesIO
+import pendulum
 
 from airflow.decorators import dag, task
 from airflow.operators.python import PythonOperator
-import pendulum
+
 from airflow.models.param import Param
 
 from decors import get_connection, get_parameter, remove, setup
@@ -31,8 +32,8 @@ default_args = {
         "port": Param(type="integer", default=22),
         "login": Param(default="", type="string"),
         "target": Param("/tmp/", type="string"),
-        "oid": Param("", description="id of the dataset in datacat", type="string")
-}
+        "oid": Param("", description="id of the dataset in datacat", type="string"),
+    },
 )
 def webdav_stagein():
     @task()
@@ -48,6 +49,13 @@ def webdav_stagein():
             return -1
 
         webdav_connid, dirname = resolve_oid(oid=oid)
+        # fixing dirname
+        if dirname.startswith("/"):
+            dirname = dirname[1:]
+        if dirname[-1] != "/":
+            dirname = dirname + "/"
+
+        abso, _ = os.path.split(dirname[:-1])
         if webdav_connid == -1:
             return -1
 
@@ -67,8 +75,9 @@ def webdav_stagein():
             # check dir?
             ssh_client.exec_command(command=f"mkdir -p {target}")
             for fname in walk_dir(client=client, prefix=prefix, path=dirname):
-                
-                target_path = os.path.join(target, fname)
+                # make it relative
+                target_path = os.path.join(target, fname[len(abso) + 1 :])
+
                 target_dirname = os.path.dirname(target_path)
                 print(f"Processing {fname} --> ({target_dirname}) ({target_path})")
                 ssh_client.exec_command(command=f"mkdir -p {target_dirname}")

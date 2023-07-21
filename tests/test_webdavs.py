@@ -1,4 +1,5 @@
 import json
+import os
 import unittest
 from collections import namedtuple
 from unittest.mock import MagicMock, create_autospec, patch
@@ -129,4 +130,23 @@ class TestWebDAV(unittest.TestCase):
         ret = resolve_oid(oid=777)
         self.assertEqual(ret, ("foo.bar", "/foo/bar/"))
 
+    def test_makerelative(self):
+        flist = ["eFlows4HPC/WPs/WP1/Testing_data/PTF/Regions/earlyEst/2000_1025_creta_test.json",
+                 "eFlows4HPC/WPs/WP1/Testing_data/PTF/Regions/med-tsumaps-python/FocMech_PreProc/MeanProb_BS4_FocMech_Reg015.npy",
+                 "eFlows4HPC/WPs/WP1/Testing_data/PTF/Regions/med-tsumaps-python/FocMech_PreProc/MeanProb_BS4_FocMech_Reg038.npy",
+                 "eFlows4HPC/WPs/WP1/Testing_data/PTF/Regions/med-tsumaps-python/ScenarioList/ScenarioListBS_Reg042_W01553N6261E00800N4301.npy.npz"]
+        
+        dirname = "eFlows4HPC/WPs/WP1/Testing_data/PTF/Regions/"
+        abso, rel = os.path.split(dirname[:-1])
+
+        print('--'*20)
+        target = "/gpfs/projects/bsc44/test_stage_in/"
+        for fname in flist:
+            tar = os.path.join(target, fname[len(abso)+1:])
+            self.assertTrue(tar.startswith(target))
+            self.assertTrue('Regions' in tar)
+            self.assertFalse('WP1' in tar)
+            print(fname, tar)
+        print('-'*20)
+        
 
