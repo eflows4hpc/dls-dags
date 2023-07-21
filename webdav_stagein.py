@@ -4,7 +4,6 @@ import pendulum
 
 from airflow.decorators import dag, task
 from airflow.operators.python import PythonOperator
-
 from airflow.models.param import Param
 
 from decors import get_connection, get_parameter, remove, setup
@@ -46,7 +45,7 @@ def webdav_stagein():
             print(
                 "Missing object id (oid) in pipeline parameters. Please provide  datacat id"
             )
-            return -1
+            return connection_id
 
         webdav_connid, dirname = resolve_oid(oid=oid)
         # fixing dirname
@@ -57,7 +56,7 @@ def webdav_stagein():
 
         abso, _ = os.path.split(dirname[:-1])
         if webdav_connid == -1:
-            return -1
+            return connection_id
 
         client = get_webdav_client(webdav_connid=webdav_connid)
         prefix = get_webdav_prefix(client=client, dirname=dirname)
@@ -79,7 +78,6 @@ def webdav_stagein():
                 target_path = os.path.join(target, fname[len(abso) + 1 :])
 
                 target_dirname = os.path.dirname(target_path)
-                print(f"Processing {fname} --> ({target_dirname}) ({target_path})")
                 ssh_client.exec_command(command=f"mkdir -p {target_dirname}")
                 # safety measure
                 ssh_client.exec_command(command=f"touch {target_path}")
