@@ -48,6 +48,9 @@ def webdav_stagein():
             return connection_id
 
         webdav_connid, dirname = resolve_oid(oid=oid)
+        if webdav_connid == -1:
+            return connection_id
+        
         # fixing dirname
         if dirname.startswith("/"):
             dirname = dirname[1:]
@@ -55,8 +58,7 @@ def webdav_stagein():
             dirname = dirname + "/"
 
         abso, _ = os.path.split(dirname[:-1])
-        if webdav_connid == -1:
-            return connection_id
+        
 
         client = get_webdav_client(webdav_connid=webdav_connid)
         prefix = get_webdav_prefix(client=client, dirname=dirname)

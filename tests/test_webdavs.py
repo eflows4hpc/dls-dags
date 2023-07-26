@@ -122,13 +122,17 @@ class TestWebDAV(unittest.TestCase):
         self.assertEqual(ret, ("default_webdav", "dls/"))
 
         mm = MagicMock()
-        mm.get_entry.return_value = json.dumps(
-            {"url": "http://foo.bar/", "metadata": {"path": "/foo/bar/"}}
-        )
+        mm.get_entry.side_effect = [
+            json.dumps({"url": "http://foo.bar/", "metadata": {"path": "/foo/bar/"}}),
+            json.dumps({"url": "http://jorge@foo.bar/", "metadata": {"path": "/foo/barzz/"}})
+        ]
         hook.return_value = mm
 
         ret = resolve_oid(oid=777)
         self.assertEqual(ret, ("foo.bar", "/foo/bar/"))
+
+        ret = resolve_oid(oid=999)
+        self.assertEqual(ret, ("jorge@foo.bar", "/foo/barzz/"))
 
     def test_makerelative(self):
         flist = ["eFlows4HPC/WPs/WP1/Testing_data/PTF/Regions/earlyEst/2000_1025_creta_test.json",

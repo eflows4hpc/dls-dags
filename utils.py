@@ -119,6 +119,33 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
 
         return 0
 
+def setup_webdav(params):
+    oid = params.get('oid', False)
+    if not oid:
+        print(
+            "Missing object id (oid) in pipeline parameters. Please provide  datacat id"
+        )
+        return -1
+
+    webdav_connid, dirname = resolve_oid(oid=oid)
+    if webdav_connid == -1:
+        return -1
+    
+     # fixing dirname
+    if dirname.startswith("/"):
+        dirname = dirname[1:]
+    if dirname[-1] != "/":
+        dirname = dirname + "/"
+
+    client = get_webdav_client(webdav_connid=webdav_connid)
+    client.verify = params.get("verify_webdav_cert", True)
+    prefix = get_webdav_prefix(client=client, dirname=dirname)
+    if not prefix:
+        print("Unable to determine common prefix, quitting")
+        prefix=""
+
+    print(f"Determined common prefix: {prefix}")
+    return client, dirname, prefix
 
 def get_webdav_client(webdav_connid):
     connection = Connection.get_connection_from_secrets(webdav_connid)
@@ -204,3 +231,17 @@ def resolve_oid(oid:str, type:str='dataset'):
     except Exception as e:
         print(f"No entry {type}/{oid} in data cat found. Or entry invalid. {e}")
         return "default_webdav", "dls/"
+
+
+def get_unicore_client(user, password, site_url, **kwargs):
+    from pyunicore import client, credentials
+
+    creds = credentials.UsernamePassword(user, password)
+    transport = client.Transport(credential=creds)
+    
+    print(f"Connecting to Unicore site: {site_url}")
+    cl = client.Client(transport, site_url)
+    storages =  cl.get_storages()
+    home = storages[0]
+    print(f"Will be using unicore storage {home}, number of storages retrieved: {len(storages)}")
+    return home

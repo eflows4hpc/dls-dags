@@ -4,7 +4,6 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from utils import copy_streams, ssh2local_copy
-from ssh2ssh import get_prefixed_params
 
 
 class TestSSH(unittest.TestCase):
