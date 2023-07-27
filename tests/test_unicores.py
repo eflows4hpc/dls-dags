@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, create_autospec, patch
+from unittest.mock import MagicMock, patch
 from airflow import settings
 from airflow.models import DagBag
 from airflow.utils.state import DagRunState, TaskInstanceState
@@ -9,29 +9,28 @@ from utils import get_unicore_client
 
 RUN_ID = "unicoReRun"
 
-class TestUnicores(unittest.TestCase):
 
+class TestUnicores(unittest.TestCase):
     def tearDown(self) -> None:
         session = settings.Session()
-        res = session.execute(f"delete from dag_run where run_id = '{RUN_ID}'")
+        _ = session.execute(f"delete from dag_run where run_id = '{RUN_ID}'")
         session.commit()
 
     def test_get_uc_client(self):
-        cfg = {'user': 'foo', 'password': 'bar', 'site_url': 'http://foo.bar'}
+        cfg = {"user": "foo", "password": "bar", "site_url": "http://foo.bar"}
 
         with self.assertRaises(Exception) as context:
-            home = get_unicore_client(**cfg)
-            self.assertTrue(False)
+            _ = get_unicore_client(**cfg)
 
-    @patch('utils.setup_webdav')
-    @patch('utils.get_unicore_client')
-    @patch('utils.walk_dir')
+    @patch("utils.setup_webdav")
+    @patch("utils.get_unicore_client")
+    @patch("utils.walk_dir")
     def test_run(self, walker, uci, davs):
-        
-        walker.return_value = ['/foo/bar', '/foo/bar2']
-        webdav_client  = MagicMock()
-        davs.return_value = (webdav_client, 'foo/', 'prefix')
-    
+
+        walker.return_value = ["/foo/bar", "/foo/bar2"]
+        webdav_client = MagicMock()
+        davs.return_value = (webdav_client, "foo/", "prefix")
+
         dagbag = DagBag(".", include_examples=False)
         dag = dagbag.get_dag(dag_id="webdav2unicore")
         self.assertIsNotNone(dag)
@@ -40,8 +39,8 @@ class TestUnicores(unittest.TestCase):
         uclient.upload = MagicMock()
         uclient.mkdir = MagicMock()
 
-        uci.return_value =uclient
-        
+        uci.return_value = uclient
+
         dagrun = dag.create_dagrun(
             state=DagRunState.RUNNING,
             run_id=RUN_ID,
@@ -62,6 +61,5 @@ class TestUnicores(unittest.TestCase):
         ti.run(ignore_all_deps=True, ignore_ti_state=True, test_mode=True)
         self.assertEqual(ti.state, TaskInstanceState.SUCCESS)
 
-        uclient.mkdir.assert_called_with('/tmp/foo')
+        uclient.mkdir.assert_called_with("/tmp/foo")
         uclient.upload.assert_called()
-        

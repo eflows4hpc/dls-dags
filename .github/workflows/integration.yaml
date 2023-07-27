@@ -36,6 +36,11 @@ jobs:
            PASSWORD: secret1234
            SSL_CERT: selfsigned
 
+      unicore-server:
+         image: ghcr.io/unicore-eu/unicore-testing-all
+         ports:
+           - 8080:8080
+
     steps:
       - uses: actions/checkout@v3
 
@@ -77,9 +82,16 @@ jobs:
         run: |
           pwd
           airflow dags test ssh2ssh -c '{"source_connection_id": "sshx_server", "source_path": "/tmps/source/", "target_connection_id": "sshx_server", "target_path": "/tmps/target/"}'
+      
       - name: WebDav test
         run: |
            airflow dags test webdav_stageout -c '{"connection_id": "sshx_server", "path":"/tmps/source/", "verify_webdav_cert": false }' 
            ls /home/runner/webdav/data/
+
+      - name: Unicore test
+        run: |
+           airflow dags test webdav2unicore -c '{"oid": "notimportant", "site_url": "https://localhost:8080/DEMO-SITE/rest/core", "user": "demouser", "password": "test123", "verify_webdav_cert": false}'
+
+        
 
 
