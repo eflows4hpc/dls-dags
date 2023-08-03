@@ -70,11 +70,13 @@ def setup(**kwargs):
     print("Setting up the connection")
     params = kwargs["params"]
 
-    if "vault_id" in params:
+    if "vault_id" in params and params['vault_id']!='':
         print("Retrieving connection details from vault")
         return f"vault_{params['vault_id']}"
 
-    # otherwise use creds provided in request
+    if "connection_id" in params:
+        return params["connection_id"]
+    
     return create_temp_connection(rrid=kwargs["run_id"], params=params)
 
 

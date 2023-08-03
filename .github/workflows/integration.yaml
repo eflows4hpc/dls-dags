@@ -92,6 +92,9 @@ jobs:
         run: |
            airflow dags test webdav2unicore -c '{"oid": "notimportant", "site_url": "https://localhost:8080/DEMO-SITE/rest/core", "user": "demouser", "password": "test123", "verify_webdav_cert": false}'
 
-        
+      - name: gitlab test
+        run: |
+            airflow dags test git2ssh -c '{"connection_id": "sshx_server", "target": "/tmps/gits", "gitlab_url": "https://gitlab.jsc.fz-juelich.de", "gitlab_repo": "DataCatalog", "host": "localhost", "port": 2222}'
+            ls /home/runner/sshdir/sshdir/gits/
 
 

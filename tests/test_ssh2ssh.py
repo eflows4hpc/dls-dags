@@ -13,7 +13,7 @@ RUN_ID = "sshRUn"
 class TestSSH2SSH(unittest.TestCase):
     def tearDown(self) -> None:
         session = settings.Session()
-        res = session.execute(f"delete from dag_run where run_id = '{RUN_ID}'")
+        _ = session.execute(f"delete from dag_run where run_id = '{RUN_ID}'")
         session.commit()
 
     def test_prefixed(self):

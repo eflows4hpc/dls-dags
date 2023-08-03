@@ -26,7 +26,7 @@ def get_project(client, name):
     return client.projects.get(fn[0].id)
 
 
-class GitFSC():
+class GitFSC:
     def __init__(self, client, **kwargs):
         self.client = client
 
@@ -55,7 +55,6 @@ CHNK_SIZE = 1024 * 1000
         "host": Param(default="", type="string"),
         "port": Param(default=22, type="integer"),
         "login": Param(default="", type="string"),
-       # "force": Param(True, type="boolean"),
         "target": Param("/tmp/", type="string"),
         "gitlab_url": Param(default="https://gitlab.awi.de/", type="string"),
         "gitlab_repo": Param(default="fesom2_core2", type="string"),
@@ -63,7 +62,7 @@ CHNK_SIZE = 1024 * 1000
 )
 def git2ssh():
     @task
-    def stream_upload(connection_id, **kwargs):
+    def stream_vupload(connection_id, **kwargs):
         params = kwargs["params"]
         target = params.get("target", "/tmp/")
         url = params.get("gitlab_url")
@@ -76,6 +75,7 @@ def git2ssh():
         print(f"Using ssh {connection_id} connection")
         ssh_hook = get_connection(conn_id=connection_id, **kwargs)
 
+        cnt = 0
         with ssh_hook.get_conn() as ssh_client:
             sftp_client = ssh_client.open_sftp()
             # check dir?
@@ -95,6 +95,10 @@ def git2ssh():
                     ):
                         content_to_write = memoryview(chunk)
                         f.write(content_to_write)
+                    cnt+=1
+
+        print(f"Copied: {cnt} files")
+        return cnt
 
     setup_task = PythonOperator(python_callable=setup, task_id="setup_connection")
     a_id = setup_task.output["return_value"]
@@ -102,7 +106,7 @@ def git2ssh():
         python_callable=remove, op_kwargs={"conn_id": a_id}, task_id="cleanup"
     )
 
-    setup_task >> stream_upload(connection_id=a_id) >> cleanup_task
+    setup_task >> stream_vupload(connection_id=a_id) >> cleanup_task
 
 
 dag = git2ssh()
