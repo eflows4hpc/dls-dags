@@ -13,15 +13,13 @@ from utils import (
     get_webdav_client,
     get_webdav_prefix,
     walk_dir,
+    file_exist
 )
 
-default_args = {
-    "owner": "airflow",
-}
-
-
 @dag(
-    default_args=default_args,
+    default_args={
+    "owner": "airflow",
+    },
     schedule=None,
     start_date=pendulum.yesterday(),
     tags=["wp6", "UCIS4EQ"],
@@ -31,6 +29,7 @@ default_args = {
         "port": Param(type="integer", default=22),
         "login": Param(default="", type="string"),
         "target": Param("/tmp/", type="string"),
+        "force": Param(True, type="boolean"),
         "oid": Param("", description="id of the dataset in datacat", type="string"),
     },
 )
@@ -39,6 +38,7 @@ def webdav_stagein():
     def load(connection_id, **kwargs):
         params = kwargs["params"]
         target = params.get("target", "/tmp/")
+        force = params.get("force", True)
 
         oid = get_parameter(parameter="oid", default=False, **kwargs)
         if not oid:
@@ -70,6 +70,7 @@ def webdav_stagein():
 
         print(f"Using ssh {connection_id} connection")
         ssh_hook = get_connection(conn_id=connection_id, **kwargs)
+        cnt=0
 
         with ssh_hook.get_conn() as ssh_client:
             sftp_client = ssh_client.open_sftp()
@@ -81,6 +82,12 @@ def webdav_stagein():
 
                 target_dirname = os.path.dirname(target_path)
                 ssh_client.exec_command(command=f"mkdir -p {target_dirname}")
+                size = file_exist(sftp=sftp_client, name=target_path)
+                if size > 0:
+                    print(f"File {target_path} exists and has {size} bytes")
+                    if force is not True:
+                        continue
+                    print("Forcing overwrite")
                 # safety measure
                 ssh_client.exec_command(command=f"touch {target_path}")
 
@@ -93,7 +100,9 @@ def webdav_stagein():
                     f.set_pipelined(pipelined=True)
                     print(f"Copying {fname}--> {target_path}")
                     copy_streams(inp=buf, outp=f)
+                    cnt+=1
 
+        print(f"Copied {cnt} files")
         return connection_id
 
     conn_id = PythonOperator(python_callable=setup, task_id="setup_connection")

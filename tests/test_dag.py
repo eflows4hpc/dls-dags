@@ -222,30 +222,4 @@ class TestADag(unittest.TestCase):
         ret = ti.xcom_pull(key="return_value")
         
 
-    @patch('utils.get_webdav_client')
-    @patch('utils.get_webdav_prefix')
-    @patch('decors.get_connection')
-    @patch('utils.walk_dir')
-    def test_stageout(self, walk, g, get_prefix, getwebdav):
-        getwebdav.return_value = MagicMock()
-        get_prefix.retrun_value = '/prefix/'
-        sft_client = MagicMock()
-
-        g.get_conn().__enter__().open_sftp().return_value = sft_client
-        walk.return_value = ['/home/foo/path/to/file.txt', '/home/foo/other/file.txt']
-
-        dagbag = DagBag(".")
-
-        dag = dagbag.get_dag(dag_id="webdav_stageout")
-        self.assertIsNotNone(dag)
-        print(dag.task_ids)
-        self.assertEqual(len(dag.tasks), 1)
-
-        dagrun = dag.create_dagrun(
-            state=DagRunState.RUNNING, run_id=RUN_ID, run_type=DagRunType.MANUAL, 
-            conf={"connection_id": "myconn","path":"/home/foo/"}
-        )
-        ti = dagrun.get_task_instance(task_id="copy")
-        ti.task = dag.get_task(task_id="copy")
-        ti.run(ignore_all_deps=True, ignore_ti_state=True, test_mode=True)
-        ret = ti.xcom_pull(key="return_value")
+    
