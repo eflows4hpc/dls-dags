@@ -54,6 +54,8 @@ def webdav_stageout():
         params = context["params"]
         if (s_con_id := params.pop("vault_id")) == "":
             s_con_id = params.get("connection_id", None)
+        else:
+            s_con_id=f"vault_{s_con_id}"
 
         source_ssh_hook = get_connection(conn_id=s_con_id, params=params)
         sftp_client = source_ssh_hook.get_conn().open_sftp()
