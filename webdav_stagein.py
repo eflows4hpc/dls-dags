@@ -13,7 +13,8 @@ from utils import (
     get_webdav_client,
     get_webdav_prefix,
     walk_dir,
-    file_exist
+    file_exist,
+    clean_up_vaultid
 )
 
 @dag(
@@ -22,6 +23,7 @@ from utils import (
     },
     schedule=None,
     start_date=pendulum.yesterday(),
+    on_success_callback=clean_up_vaultid,
     tags=["wp6", "UCIS4EQ"],
     params={
         "vault_id": Param(default="", type="string"),

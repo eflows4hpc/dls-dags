@@ -7,7 +7,7 @@ import pendulum
 
 from decors import get_connection
 from utils import copy_streams, RFSC, walk_dir
-from utils import clean_up_vaultid
+
 
 
 def get_prefixed_params(prefix, params):

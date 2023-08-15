@@ -5,7 +5,7 @@ from airflow.decorators import dag, task
 from airflow.operators.python import PythonOperator
 from airflow.models.param import Param
 from decors import get_connection, remove, setup
-from utils import walk_dir
+from utils import walk_dir, clean_up_vaultid
 
 try:
     import gitlab
@@ -50,6 +50,7 @@ CHNK_SIZE = 1024 * 1000
     schedule=None,
     start_date=pendulum.today("UTC"),
     tags=["gitlab", "ssh", "fesom2"],
+    on_success_callback=clean_up_vaultid,
     params={
         "vault_id": Param(default="", type="string"),
         "host": Param(default="", type="string"),

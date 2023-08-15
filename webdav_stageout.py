@@ -15,12 +15,14 @@ from utils import (
     get_webdav_client,
     get_webdav_prefix,
     walk_dir,
+    clean_up_vaultid
 )
 
 
 @dag(
     schedule=None,
     start_date=pendulum.today("UTC"),
+    on_success_callback=clean_up_vaultid,
     params={
         "vault_id": Param(default="", type="string"),
         "host": Param(default="", type="string"),
