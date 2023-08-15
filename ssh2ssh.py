@@ -2,7 +2,10 @@ import os
 
 from airflow.decorators import dag, task
 from airflow.models.param import Param
+from airflow.models.dagrun import DagRun
+from airflow.settings import Session
 
+from sqlalchemy import update
 import pendulum
 
 from decors import get_connection
@@ -15,10 +18,28 @@ def get_prefixed_params(prefix, params):
     }
     return ret
 
+def mask_config(cfg, fields2mask = ['vault_id']):
+    return  dict((key, val) if key not in fields2mask else (key, "***") for key, val in cfg.items())
+
+def clean_up_vaultid(context):
+    dagrun = context['dag_run']
+    cfg = dagrun.conf
+    
+    masked = mask_config(cfg=cfg, fields2mask=['source_vault_id', 'target_vault_id'])
+    session = Session()
+    cnt = session.execute(
+        update(DagRun)
+        .where(DagRun.id==dagrun.id)
+        .values(conf=masked)
+    ).rowcount
+
+    print(f"Clean-up updated {cnt} rows to mask configs")
+    session.commit()
 
 @dag(
     schedule=None,
     start_date=pendulum.today("UTC"),
+    on_success_callback=clean_up_vaultid,
     params={
         "source_vault_id": Param("", type="string"),
         "source_host": Param("", type="string"),
@@ -39,9 +60,6 @@ def ssh2ssh():
         params = context["params"]
         s_params = get_prefixed_params(prefix="source_", params=params)
         t_params = get_prefixed_params(prefix="target_", params=params)
-        # still fallback to normal connections, used in integration testing
-        print('S params:', s_params)
-        print('T params:', t_params)
         
         if (s_con_id:=s_params.pop('vault_id'))=="":
             s_con_id = s_params.get('connection_id', None)

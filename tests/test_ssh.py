@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from utils import copy_streams, ssh2local_copy
+from ssh2ssh import mask_config
 
 
 class TestSSH(unittest.TestCase):
@@ -78,4 +79,20 @@ class TestSSH(unittest.TestCase):
                 print("Read following: ", txt)
 
                 self.assertEqual(text, txt)
+
+
+    def test_masking(self):
+        cnfg = {'bar': 'foo', 'xbar': 'bar2'}
+        masked = mask_config(cnfg)
+        self.assertDictEqual(masked, cnfg)
+
+        cnfg['vault_id'] = 'foobar'
+        masked = mask_config(cnfg)
+        self.assertDictEqual(masked, {'bar': 'foo', 'xbar': 'bar2', 'vault_id': '***'})
+
+        masked = mask_config(cnfg, fields2mask=['zbar'])
+        self.assertDictEqual(masked, {'bar': 'foo', 'xbar': 'bar2', 'vault_id': 'foobar'})
+
+        masked = mask_config(cnfg, fields2mask=['xbar'])
+        self.assertDictEqual(masked, {'bar': 'foo', 'xbar': '***', 'vault_id': 'foobar'})
 
