@@ -258,7 +258,7 @@ def clean_up_vaultid(context):
     dagrun = context['dag_run']
     cfg = dagrun.conf
     
-    masked = mask_config(cfg=cfg, fields2mask=['source_vault_id', 'target_vault_id'])
+    masked = mask_config(cfg=cfg)
     session = Session()
     cnt = session.execute(
         update(DagRun)

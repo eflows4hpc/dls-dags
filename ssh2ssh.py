@@ -19,7 +19,6 @@ def get_prefixed_params(prefix, params):
 @dag(
     schedule=None,
     start_date=pendulum.today("UTC"),
-    on_success_callback=clean_up_vaultid,
     params={
         "source_vault_id": Param("", type="string"),
         "source_host": Param("", type="string"),
