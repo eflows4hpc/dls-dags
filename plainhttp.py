@@ -19,7 +19,7 @@ default_args = {
     params={
         "vault_id": Param(default="", type="string"),
         "host": Param(default="", type="string"),
-        "port": Param(default=22, type="integer"),
+        "port": Param(default=22),
         "login": Param(default="", type="string"),
         "force": Param(True, type="boolean"),
         "target": Param("/tmp/", type="string"),
