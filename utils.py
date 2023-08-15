@@ -10,6 +10,10 @@ from datacat_integration.hooks import DataCatalogHook
 from webdav3.client import Client
 from airflow.exceptions import AirflowNotFoundException
 
+from airflow.models.dagrun import DagRun
+from airflow.settings import Session
+from sqlalchemy import update
+
 
 def get_mlflow_client():
     try:
@@ -245,3 +249,22 @@ def get_unicore_client(user, password, site_url, **kwargs):
     home = storages[0]
     print(f"Will be using unicore storage {home}, number of storages retrieved: {len(storages)}")
     return home
+
+
+def mask_config(cfg, fields2mask = ['vault_id']):
+    return  dict((key, val) if key not in fields2mask else (key, "***") for key, val in cfg.items())
+
+def clean_up_vaultid(context):
+    dagrun = context['dag_run']
+    cfg = dagrun.conf
+    
+    masked = mask_config(cfg=cfg, fields2mask=['source_vault_id', 'target_vault_id'])
+    session = Session()
+    cnt = session.execute(
+        update(DagRun)
+        .where(DagRun.id==dagrun.id)
+        .values(conf=masked)
+    ).rowcount
+
+    print(f"Clean-up updated {cnt} rows to mask configs")
+    session.commit()

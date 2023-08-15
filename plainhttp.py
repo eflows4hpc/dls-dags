@@ -3,7 +3,7 @@ from airflow.operators.python import PythonOperator
 import pendulum
 from airflow.models.param import Param
 from decors import get_connection, remove, setup
-from utils import http2ssh
+from utils import http2ssh, clean_up_vaultid
 
 default_args = {
     "owner": "airflow",
@@ -15,7 +15,12 @@ default_args = {
     schedule=None,
     start_date=pendulum.today("UTC"),
     tags=["wp4", "http", "ssh"],
+    on_success_callback=clean_up_vaultid,
     params={
+        "vault_id": Param(default="", type="string"),
+        "host": Param(default="", type="string"),
+        "port": Param(default=22, type="integer"),
+        "login": Param(default="", type="string"),
         "force": Param(True, type="boolean"),
         "target": Param("/tmp/", type="string"),
         "url": Param("", type="string")

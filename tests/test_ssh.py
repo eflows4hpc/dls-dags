@@ -3,8 +3,7 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from utils import copy_streams, ssh2local_copy
-from ssh2ssh import mask_config
+from utils import copy_streams, ssh2local_copy, mask_config
 
 
 class TestSSH(unittest.TestCase):
