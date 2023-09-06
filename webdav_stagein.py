@@ -83,7 +83,7 @@ def webdav_stagein():
                 target_path = os.path.join(target, fname[len(abso) + 1 :])
 
                 target_dirname = os.path.dirname(target_path)
-                ssh_client.exec_command(command=f"mkdir -p {target_dirname}")
+                
                 size = file_exist(sftp=sftp_client, name=target_path)
                 if size > 0:
                     print(f"File {target_path} exists and has {size} bytes")
@@ -91,6 +91,7 @@ def webdav_stagein():
                         continue
                     print("Forcing overwrite")
                 # safety measure
+                ssh_client.exec_command(command=f"mkdir -p {target_dirname}")
                 ssh_client.exec_command(command=f"touch {target_path}")
 
                 res1 = client.resource(fname)
