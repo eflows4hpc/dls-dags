@@ -11,12 +11,8 @@ from datacat_integration.hooks import DataCatalogHook
 
 from b2shareoperator import add_file, create_draft_record, get_community, submit_draft
 from decors import get_connection, get_parameter, remove, setup
-from utils import ssh2local_copy
+from utils import ssh2local_copy, clean_up_vaultid
 from airflow.models.param import Param
-
-default_args = {
-    "owner": "airflow",
-}
 
 
 def create_template(hrespo):
@@ -37,7 +33,10 @@ def create_template(hrespo):
 
 
 @dag(
-    default_args=default_args,
+    default_args={
+    "owner": "airflow",
+    },
+    on_success_callback=clean_up_vaultid,
     schedule=None,
     start_date=pendulum.today(),
     tags=["example"],

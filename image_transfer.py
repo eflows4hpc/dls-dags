@@ -7,11 +7,7 @@ from airflow.models.param import Param
 import pendulum
 from decors import get_connection, remove, setup, get_creds_from_vault_path
 import requests
-from utils import file_exist
-
-default_args = {
-    "owner": "airflow",
-}
+from utils import file_exist, clean_up_vaultid
 
 def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
     sftp_client = ssh_client.open_sftp()
@@ -55,7 +51,10 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
         return 0
 
 @dag(
-    default_args=default_args,
+    default_args={
+    "owner": "airflow",
+    },
+    on_success_callback=clean_up_vaultid,
     schedule=None,
     start_date=pendulum.yesterday('UTC'),
     tags=["example"],
@@ -69,16 +68,14 @@ def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
 )
 def transfer_image():
     
-    @task #(retries=3, retry_delay=2, retry_exponential_backoff=True)
+    @task
     def stream_upload(connection_id, **kwargs):
         params = kwargs["params"]
-        force = params.get("force", True)
-        target = params.get("target", "/tmp/")
-        image_id = params.get("image_id", "wordcount_skylake.sif")
+        force = params.get("force")
+        target = params.get("target")
+        image_id = params.get("image_id")
         target = os.path.join(target, image_id)
-        url = params.get(
-            "url", "https://bscgrid20.bsc.es/image_creation/images/download/"
-        )
+        url = params.get("url")
         url = urljoin(url, image_id)
         vault_path = params.get("vault_path", "")
         user, passsword = get_creds_from_vault_path(path=vault_path)
