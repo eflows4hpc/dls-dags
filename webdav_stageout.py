@@ -67,10 +67,10 @@ def webdav_stageout():
         working_dir = Variable.get("working_dir", default_var="/tmp/")
 
         copied = {}
-        if file_exist(sftp=sftp_client, name=params['path']):
-            mappings = [params['path']]
-        else:
-            mappings = walk_dir(client=sclient, path=params["path"], prefix="")
+        #if file_exist(sftp=sftp_client, name=params['path']):
+        #    mappings = [params['path']]
+        #else:
+        mappings = walk_dir(client=sclient, path=params["path"], prefix="")
 
         for fname in mappings:
             with tempfile.NamedTemporaryFile(dir=working_dir) as tmp:
