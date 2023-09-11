@@ -265,8 +265,7 @@ class TestWebDAV(unittest.TestCase):
     @patch('utils.get_webdav_prefix')
     @patch('decors.get_connection')
     @patch('utils.walk_dir')
-    @patch('utils.file_exist')
-    def test_stageout(self, exist, walk, g, get_prefix, getwebdav):
+    def test_stageout(self, walk, g, get_prefix, getwebdav):
         getwebdav.return_value = MagicMock()
         get_prefix.retrun_value = '/prefix/'
         sft_client = MagicMock()
@@ -275,7 +274,6 @@ class TestWebDAV(unittest.TestCase):
         tbl=['/home/foo/path/to/file.txt', '/home/foo/other/file.txt']
 
         walk.return_value = tbl
-        exist.return_value = False
         dagbag = DagBag(".")
 
         dag = dagbag.get_dag(dag_id="webdav_stageout")
@@ -299,7 +297,7 @@ class TestWebDAV(unittest.TestCase):
     @patch('utils.get_webdav_client')
     @patch('utils.get_webdav_prefix')
     @patch('decors.get_connection')
-    @patch('utils.walk_dir')
+    @patch('utils.walk_dir', side_effect=IOError)
     @patch('utils.file_exist')
     def test_stageout_file(self, exists, walk, g, get_prefix, getwebdav):
         getwebdav.return_value = MagicMock()
@@ -309,7 +307,7 @@ class TestWebDAV(unittest.TestCase):
         g.get_conn().__enter__().open_sftp().return_value = sft_client
         tbl=['/home/foo/path/to/file.txt', '/home/foo/other/file.txt']
 
-        walk.return_value = tbl
+        #walk.return_value = tbl
         exists.return_value = True 
         dagbag = DagBag(".")
 

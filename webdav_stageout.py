@@ -67,10 +67,18 @@ def webdav_stageout():
         working_dir = Variable.get("working_dir", default_var="/tmp/")
 
         copied = {}
-        #if file_exist(sftp=sftp_client, name=params['path']):
-        #    mappings = [params['path']]
-        #else:
-        mappings = walk_dir(client=sclient, path=params["path"], prefix="")
+
+        try:
+            mappings = list(walk_dir(client=sclient, path=params["path"], prefix=""))
+        except IOError:
+            # single file?
+            if file_exist(sftp=sftp_client, name=params['path']):
+                mappings = [params['path']]
+                params['path'] = os.path.basename(params['path'])
+            else:
+                print("Invalid path or file name")
+                return -1
+
 
         for fname in mappings:
             with tempfile.NamedTemporaryFile(dir=working_dir) as tmp:
