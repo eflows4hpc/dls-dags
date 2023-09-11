@@ -103,6 +103,11 @@ class TestWebDAV(unittest.TestCase):
         lst = walk_dir(client=local_client, prefix="", path="/tmp/")
         self.assertIsNotNone(lst)
 
+    def test_walk_file(self):
+        local_client = LFSC()
+        with self.assertRaises(NotADirectoryError) as context:
+            lst = local_client.list(path='./tests/test_webdavs.py', get_info=True)
+    
     def test_walk_remote(self):
         sftp_client = create_autospec(SFTPClient)
         sftp_client.listdir_attr = MagicMock(
@@ -260,7 +265,8 @@ class TestWebDAV(unittest.TestCase):
     @patch('utils.get_webdav_prefix')
     @patch('decors.get_connection')
     @patch('utils.walk_dir')
-    def test_stageout(self, walk, g, get_prefix, getwebdav):
+    @patch('utils.file_exist')
+    def test_stageout(self, exist, walk, g, get_prefix, getwebdav):
         getwebdav.return_value = MagicMock()
         get_prefix.retrun_value = '/prefix/'
         sft_client = MagicMock()
@@ -268,7 +274,8 @@ class TestWebDAV(unittest.TestCase):
         g.get_conn().__enter__().open_sftp().return_value = sft_client
         tbl=['/home/foo/path/to/file.txt', '/home/foo/other/file.txt']
 
-        walk.return_value = tbl 
+        walk.return_value = tbl
+        exist.return_value = False
         dagbag = DagBag(".")
 
         dag = dagbag.get_dag(dag_id="webdav_stageout")
@@ -287,4 +294,39 @@ class TestWebDAV(unittest.TestCase):
 
         self.assertEqual(len(tbl), len(ret))
         self.assertListEqual(tbl, list(ret.keys()))
+
+
+    @patch('utils.get_webdav_client')
+    @patch('utils.get_webdav_prefix')
+    @patch('decors.get_connection')
+    @patch('utils.walk_dir')
+    @patch('utils.file_exist')
+    def test_stageout_file(self, exists, walk, g, get_prefix, getwebdav):
+        getwebdav.return_value = MagicMock()
+        get_prefix.retrun_value = '/prefix/'
+        sft_client = MagicMock()
+
+        g.get_conn().__enter__().open_sftp().return_value = sft_client
+        tbl=['/home/foo/path/to/file.txt', '/home/foo/other/file.txt']
+
+        walk.return_value = tbl
+        exists.return_value = True 
+        dagbag = DagBag(".")
+
+        dag = dagbag.get_dag(dag_id="webdav_stageout")
+        self.assertIsNotNone(dag)
+        print(dag.task_ids)
+        self.assertEqual(len(dag.tasks), 1)
+
+        dagrun = dag.create_dagrun(
+            state=DagRunState.RUNNING, run_id=RUN_ID, run_type=DagRunType.MANUAL, 
+            conf={"connection_id": "myconn","path":"/home/foo/bar.exe"}
+        )
+        ti = dagrun.get_task_instance(task_id="copy")
+        ti.task = dag.get_task(task_id="copy")
+        ti.run(ignore_all_deps=True, ignore_ti_state=True, test_mode=True)
+        ret = ti.xcom_pull(key="return_value")
+
+        self.assertEqual(1, len(ret))
+        self.assertListEqual(["/home/foo/bar.exe"], list(ret.keys()))
 

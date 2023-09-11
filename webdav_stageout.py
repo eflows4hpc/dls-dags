@@ -15,7 +15,8 @@ from utils import (
     get_webdav_client,
     get_webdav_prefix,
     walk_dir,
-    clean_up_vaultid
+    clean_up_vaultid,
+    file_exist
 )
 
 
@@ -66,7 +67,10 @@ def webdav_stageout():
         working_dir = Variable.get("working_dir", default_var="/tmp/")
 
         copied = {}
-        mappings = walk_dir(client=sclient, path=params["path"], prefix="")
+        if file_exist(params['path']):
+            mappings = [params['path']]
+        else:
+            mappings = walk_dir(client=sclient, path=params["path"], prefix="")
 
         for fname in mappings:
             with tempfile.NamedTemporaryFile(dir=working_dir) as tmp:
