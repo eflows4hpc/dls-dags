@@ -265,7 +265,7 @@ class TestWebDAV(unittest.TestCase):
     @patch('utils.get_webdav_prefix')
     @patch('decors.get_connection')
     @patch('utils.walk_dir')
-    @patch('utils.is_dir', return_value=False)
+    @patch('utils.is_dir', return_value=True)
     def test_stageout(self, is_dir, walk, g, get_prefix, getwebdav):
         getwebdav.return_value = MagicMock()
         get_prefix.retrun_value = '/prefix/'
@@ -300,7 +300,7 @@ class TestWebDAV(unittest.TestCase):
     @patch('utils.get_webdav_prefix')
     @patch('decors.get_connection')
     @patch('utils.walk_dir', side_effect=IOError)
-    @patch('utils.is_dir', return_value=True)
+    @patch('utils.is_dir', return_value=False)
     def test_stageout_file(self, isdir, walk, g, get_prefix, getwebdav):
         getwebdav.return_value = MagicMock()
         get_prefix.retrun_value = '/prefix/'

@@ -94,7 +94,6 @@ def file_exist(sftp, name):
         return -1
     
 def is_dir(sftp, name):
-    print(name,'-->', sftp.stat(name).st_mode)
     return S_ISDIR(sftp.stat(name).st_mode)
 
 
