@@ -14,9 +14,9 @@ from utils import (
     resolve_oid,
     get_webdav_client,
     get_webdav_prefix,
-    walk_dir,
     clean_up_vaultid,
-    file_exist
+    file_exist,
+    is_dir
 )
 
 
@@ -69,14 +69,14 @@ def webdav_stageout():
 
         copied = {}
 
+
         try:
-            mappings = list(walk_dir(client=sclient, path=params["path"], prefix=""))
-        except IOError:
-            # single file?
-            if file_exist(sftp=sftp_client, name=params['path']):
+            if is_dir(sftp=sftp_client, name=params['path']):
                 mappings = [params['path']]
                 params['path'] = os.path.dirname(params['path'])
             else:
+                mappings = walk_dir(client=sclient, path=params["path"], prefix="")
+        except IOError:
                 print("Invalid path or file name")
                 return -1
 

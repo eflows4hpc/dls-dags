@@ -14,6 +14,7 @@ from airflow.models.dagrun import DagRun
 from airflow.settings import Session
 from sqlalchemy import update
 
+from stat import S_ISDIR
 
 def get_mlflow_client():
     try:
@@ -91,6 +92,9 @@ def file_exist(sftp, name):
         return r.st_size
     except:
         return -1
+    
+def is_dir(sftp, name):
+    return S_ISDIR(sftp.stat(name).st_mode)
 
 
 def http2ssh(url: str, ssh_client, remote_name: str, force=True, auth=None):
