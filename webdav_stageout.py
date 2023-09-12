@@ -45,6 +45,7 @@ def webdav_stageout():
 
         webdav_connid, dirname = resolve_oid(oid=oid, type="storage_target")
         
+        
         client = get_webdav_client(webdav_connid=webdav_connid)
         client.verify = get_parameter(parameter="verify_webdav_cert", default=True, **context)
         
@@ -74,7 +75,7 @@ def webdav_stageout():
             # single file?
             if file_exist(sftp=sftp_client, name=params['path']):
                 mappings = [params['path']]
-                params['path'] = os.path.basename(params['path'])
+                params['path'] = os.path.dirname(params['path'])
             else:
                 print("Invalid path or file name")
                 return -1

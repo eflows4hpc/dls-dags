@@ -307,7 +307,6 @@ class TestWebDAV(unittest.TestCase):
         g.get_conn().__enter__().open_sftp().return_value = sft_client
         tbl=['/home/foo/path/to/file.txt', '/home/foo/other/file.txt']
 
-        #walk.return_value = tbl
         exists.return_value = True 
         dagbag = DagBag(".")
 
