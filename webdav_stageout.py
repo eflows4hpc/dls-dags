@@ -71,6 +71,7 @@ def webdav_stageout():
 
 
         try:
+            print('Checking if ', params['path'],' is a directory')
             if is_dir(sftp=sftp_client, name=params['path']):
                 mappings = [params['path']]
                 params['path'] = os.path.dirname(params['path'])
