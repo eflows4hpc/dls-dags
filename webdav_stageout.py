@@ -71,12 +71,14 @@ def webdav_stageout():
 
 
         try:
-            print('Checking if ', params['path'],' is a directory')
+            print('Checking if ', params['path'],' is a directory...')
             if is_dir(sftp=sftp_client, name=params['path']):
+                print('Postive. Recursive search of all files')
+                mappings = walk_dir(client=sclient, path=params["path"], prefix="")
+            else:
                 mappings = [params['path']]
                 params['path'] = os.path.dirname(params['path'])
-            else:
-                mappings = walk_dir(client=sclient, path=params["path"], prefix="")
+                print("Negative will only be copying one file")
         except IOError:
                 print("Invalid path or file name")
                 return -1
