@@ -16,7 +16,13 @@ from utils import file_exist, ssh_download
     schedule=None,
     start_date=pendulum.today("UTC"),
     tags=["example", "model repo"],
-    params={"location": Param("/tmp/", type="string"),},
+    params={
+        "location": Param("/tmp/", type="string", description="location of attrs.json with 'metrics', 'params', and 'artifacts' fields"),
+        "vault_id": Param(default="", type="string"),
+        "host": Param(default="", type="string"),
+        "port": Param(type="integer", default=22),
+        "login": Param(default="", type="string"),
+    },
 )
 def mlflow_upload_model():
     @task(multiple_outputs=True)
@@ -47,18 +53,25 @@ def mlflow_upload_model():
         else:
             print(f"No model attributes found {location}/attrs.json")
 
-        if file_exist(sftp=sftp_client, name=os.path.join(location, "model.pkl")):
-            print(f"Downloading model ({location}/model.pkl)")
-            ssh_download(
-                sftp_client=sftp_client,
-                remote=os.path.join(location, "model.pkl"),
-                local=os.path.join(temp_dir, "model.pkl"),
-            )
-            content["model"] = os.path.join(temp_dir, "model.pkl")
+        local_arts = []
+        if not 'artifacts' in content:
+            print("No artifacts specified")
         else:
-            print(f"No serialized model found in {location}")
+            for art in content['artifacts']:
+                if not file_exist(sftp=sftp_client, name=art):
+                    print(f"Artifact {art} not found. Skipping")
+                    continue
 
-        content["temp_dir"] = temp_dir
+                print(f"Downloading model {art})")
+                ssh_download(
+                    sftp_client=sftp_client,
+                    remote=art,
+                    local=os.path.join(temp_dir, os.path.basename(art)),
+                )
+                local_arts.append(os.path.join(temp_dir, os.path.basename(art)))
+            
+        content['temp_dir'] = temp_dir
+        content['artifacts'] = local_arts
         return content
 
     #@task.virtualenv(requirements=["mlflow==2.3.2"])
@@ -69,7 +82,7 @@ def mlflow_upload_model():
         import tempfile
 
         client = get_mlflow_client()
-        if "metrics" or "model" in attrs:
+        if "metrics" or 'artifacts' in attrs:
             name = attrs.get(
                 "name", f"experiment_{next(tempfile._get_candidate_names())}"
             )
@@ -87,13 +100,14 @@ def mlflow_upload_model():
             print("Uploading metrics client")
             upload_metrics(mlflow_client=client, metadata=attrs, runid=run.info.run_id)
 
-        if "model" in attrs:
+        if "artifacts" in attrs:
             print("Uploading model")
-            client.log_artifact(
-                run_id=run.info.run_id,
-                local_path=attrs["model"],
-                artifact_path="model/model.pkl",
-            )
+            for art in attrs['artifacts']:
+                client.log_artifact(
+                    run_id=run.info.run_id,
+                    local_path=art,
+                    artifact_path=f"model/{os.path.basename(art)}",
+                )
 
         client.log_text(
             run_id=run.info.run_id,
