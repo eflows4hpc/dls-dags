@@ -16,13 +16,21 @@ from airflow.models.param import Param
 
 
 def create_template(hrespo):
-    return {
+    for k,v in hrespo.items():
+        try:
+            # a hack to give possibility to add list and dicts in md field
+            hrespo[k] = json.loads(v)
+        except:
+            pass 
+    
+    print("Metadata record: ", hrespo)
+    
+    rec =  {
         "titles": [{"title": hrespo["title"]}],
-        "creators": [{"creator_name": hrespo["creator_name"]}],
         "descriptions": [
             {"description": hrespo["description"], "description_type": "Abstract"}
         ],
-        "community": "2d58eb08-af65-4cad-bd25-92f1a17d325b",
+        "community": hrespo["community"], #"2d58eb08-af65-4cad-bd25-92f1a17d325b",
         "community_specific": {
             "2dc5046b-06b6-449f-bd49-73009c5303b1": {
                 "helmholtz centre": ["Forschungszentrum Jülich"]
@@ -30,6 +38,17 @@ def create_template(hrespo):
         },
         "open_access": hrespo["open_access"] == "True",
     }
+
+    if 'creator_name' in hrespo:
+        rec["creators"]= [{"creator_name": hrespo["creator_name"]}]
+
+    if 'creators' in hrespo:
+        rec['creators'] = hrespo['creators']
+
+    if 'license' in hrespo:
+        rec['license'] = hrespo['license']
+    
+    return rec
 
 
 @dag(
