@@ -28,7 +28,7 @@ def get_mlflow_client():
         print("Please define the mlflow connection 'my_mlflow'")
         return MlflowClient()
 
-    mlflow_url = f"http://{connection.host}:{connection.port}"
+    mlflow_url = f"https://{connection.host}"
     print("Will be using remote mlflow @", mlflow_url)
     remote_client = MlflowClient(tracking_uri=mlflow_url, registry_uri=mlflow_url)
     return remote_client
