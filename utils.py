@@ -19,6 +19,7 @@ from stat import S_ISDIR
 def get_mlflow_client():
     try:
         from mlflow.client import MlflowClient
+        import mlflow
     except ImportError:
         print("Unable to import mlflow")
 
@@ -31,6 +32,7 @@ def get_mlflow_client():
     mlflow_url = f"https://{connection.host}"
     print("Will be using remote mlflow @", mlflow_url)
     remote_client = MlflowClient(tracking_uri=mlflow_url, registry_uri=mlflow_url)
+    mlflow.set_tracking_uri(mlflow_url)
     return remote_client
 
 
