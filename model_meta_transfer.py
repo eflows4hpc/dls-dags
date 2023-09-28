@@ -105,15 +105,15 @@ def mlflow_upload_model():
             for art in attrs['artifacts']:
                 client.log_artifact(
                     run_id=run.info.run_id,
-                    local_path=art,
-                    artifact_path=f"model/{os.path.basename(art)}",
+                    local_path=art
+                    #artifact_path=f"model/{os.path.basename(art)}",
                 )
 
-        client.log_text(
-            run_id=run.info.run_id,
-            text="This experiment was created by DLS",
-            artifact_file="model/meta.txt",
-        )
+        #client.log_text(
+        #    run_id=run.info.run_id,
+        #    text="This experiment was created by DLS",
+        #    artifact_file="model/meta.txt",
+        #)
         if 'temp_dir' in attrs:
             shutil.rmtree(path=attrs["temp_dir"])
 
