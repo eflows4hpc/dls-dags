@@ -53,7 +53,7 @@ def create_template(hrespo):
 
 @dag(
     default_args={
-    "owner": "airflow",
+        "owner": "airflow",
     },
     on_success_callback=clean_up_vaultid,
     schedule=None,
@@ -120,10 +120,13 @@ def upload_example():
         submitted = submit_draft(record=r, token=token)
         print(f"Record created {submitted}")
 
-        return submitted["links"]["publication"]
+        return {
+            'link': submitted["links"]["publication"],
+            'md': template
+        }
 
     @task()
-    def register(object_url, **kwargs):
+    def register(dt_object, **kwargs):
         reg = get_parameter(parameter="register", default=False, **kwargs)
         if not reg:
             print("Skipping registration as 'register' parameter is not set")
@@ -131,9 +134,11 @@ def upload_example():
 
         hook = DataCatalogHook()
         print("Connected to datacat via hook")
+        object_url = dt_object['link']
+        name = dt_object['md']['titles'][0]['title']
 
         entry = DataCatalogEntry(
-            name=f"DLS results {kwargs['run_id']}",
+            name=f"{name} {kwargs['run_id']}",
             url=object_url,
             metadata={"author": "DLS on behalf of eFlows", "access": "hook-based"},
         )
@@ -155,7 +160,7 @@ def upload_example():
         python_callable=remove, op_kwargs={"conn_id": a_id}, task_id="cleanup"
     )
 
-    reg = register(object_url=uid)
+    reg = register(dt_object=uid)
 
     setup_task >> files >> uid >> reg >> en
 

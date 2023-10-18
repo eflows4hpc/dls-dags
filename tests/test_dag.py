@@ -164,7 +164,8 @@ class TestADag(unittest.TestCase):
 
         ti = dagrun.get_task_instance(task_id="register")
         ti.task = dag.get_task(task_id="register")
-        ti.run(ignore_all_deps=True, ignore_ti_state=True, test_mode=True)
+        ti.task.op_kwargs = {'dt_object': {'link': 'link', 'md': {'titles': [{'title': 'bla'}]}}}
+        ti.run(ignore_all_deps=True, ignore_ti_state=True, test_mode=True, )
         assert ti.state == TaskInstanceState.SUCCESS
         # registration skipped:
         self.assertEqual(

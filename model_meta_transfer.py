@@ -83,7 +83,7 @@ def mlflow_upload_model():
 
         client = get_mlflow_client()
         
-        if "metrics" or 'artifacts' in attrs:
+        if "metrics" or "artifacts" in attrs:
             name = attrs.get(
                 "name", f"experiment_{next(tempfile._get_candidate_names())}"
             )
@@ -104,10 +104,11 @@ def mlflow_upload_model():
         if "artifacts" in attrs:
             print("Uploading model")
             for art in attrs['artifacts']:
+                print(f"Uploading model -> model/{os.path.basename(art)}")
                 client.log_artifact(
                     run_id=run.info.run_id,
                     local_path=art,
-                    artifact_path=f"model/{os.path.basename(art)}",
+                    artifact_path=f"model",
                 )
 
         #client.log_text(
