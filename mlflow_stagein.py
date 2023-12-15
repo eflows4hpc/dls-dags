@@ -22,7 +22,7 @@ from utils import file_exist, copy_streams
         "host": Param(default="", type="string"),
         "port": Param(type="integer", default=22),
         "login": Param(default="", type="string"),
-        "mlflow_runid": Param(type="string", description="run from which model should be staged-in"),
+        "mlflow_runid": Param(default="", type="string", description="run from which model should be staged-in"),
         "mlflow_modelpath": Param(type="string", default="model/model.pkl")
     },
 )

@@ -1,4 +1,4 @@
-apache-airflow==2.6.3
+apache-airflow==2.7.0
 apache-airflow-providers-ssh
 apache-airflow-providers-hashicorp
 boto3==1.24.32
@@ -9,3 +9,4 @@ airflow-datacat-integration>=0.1.4
 virtualenv
 pyunicore==0.15.0
 python-gitlab==3.15.0
+mlflow==1.30.0
