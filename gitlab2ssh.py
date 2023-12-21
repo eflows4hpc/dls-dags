@@ -4,8 +4,43 @@ import pendulum
 from airflow.decorators import dag, task
 from airflow.operators.python import PythonOperator
 from airflow.models.param import Param
-from decors import remove, setup
-from utils import clean_up_vaultid
+from decors import get_connection, remove, setup
+from utils import walk_dir, clean_up_vaultid
+
+try:
+    import gitlab
+except ImportError:
+    print("Unable to import gitlab library")
+
+
+def get_gitlab_client(url):
+    return gitlab.Gitlab(url)
+
+
+def get_project(client, name):
+    fn = [pr for pr in client.projects.list(iterator=True) if pr.name == name]
+    if not fn:
+        print("No project for given name found")
+        return None
+
+    return client.projects.get(fn[0].id)
+
+
+class GitFSC:
+    def __init__(self, client, **kwargs):
+        self.client = client
+
+    def list(self, path, get_info=True):
+        if not get_info:
+            return [
+                el["name"]
+                for el in self.client.repository_tree(path=path, get_all=True)
+            ]
+        return [
+            {"path": el["path"], "isdir": el["type"] == "tree"}
+            for el in self.client.repository_tree(path=path, get_all=True)
+        ]
+
 
 CHNK_SIZE = 1024 * 1000
 
@@ -27,50 +62,8 @@ CHNK_SIZE = 1024 * 1000
     },
 )
 def git2ssh():
-    @task.virtualenv(
-            system_site_packages=True,
-            requirements=["python-gitlab==3.15.0"]
-    )
+    @task
     def stream_vupload(connection_id, **kwargs):
-        from decors import get_connection
-        from utils import walk_dir
-
-        try:
-            import gitlab
-            print("Gitlab imported!")
-        except ImportError:
-            print("Unable to import gitlab library")
-
-
-        def get_gitlab_client(url):
-            return gitlab.Gitlab(url)
-
-
-        def get_project(client, name):
-            fn = [pr for pr in client.projects.list(iterator=True) if pr.name == name]
-            if not fn:
-                print("No project for given name found")
-                return None
-
-            return client.projects.get(fn[0].id)
-
-
-        class GitFSC:
-            def __init__(self, client, **kwargs):
-                self.client = client
-
-            def list(self, path, get_info=True):
-                if not get_info:
-                    return [
-                        el["name"]
-                        for el in self.client.repository_tree(path=path, get_all=True)
-                    ]
-                return [
-                    {"path": el["path"], "isdir": el["type"] == "tree"}
-                    for el in self.client.repository_tree(path=path, get_all=True)
-                ]
-
-
         params = kwargs["params"]
         target = params.get("target", "/tmp/")
         url = params.get("gitlab_url")
