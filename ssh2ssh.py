@@ -57,6 +57,8 @@ def ssh2ssh():
         sftp_client = source_ssh_hook.get_conn().open_sftp()
         sclient = RFSC(sftp_client)
 
+        target_conn = target_ssh_hook.get_conn()
+
         mappings = list(walk_dir(client=sclient, path=s_params["path"], prefix=""))
         for fname in mappings:
             target_name = fname.replace(s_params["path"], t_params["path"])
@@ -64,9 +66,9 @@ def ssh2ssh():
 
             di = os.path.dirname(target_name)
             print("Making direcotry", di)
-            target_ssh_hook.get_conn().exec_command(command=f"mkdir -p {di}")
+            target_conn.exec_command(command=f"mkdir -p {di}")
             # sometimes mkdir takes longer and is not sync?
-            target_ssh_hook.get_conn().exec_command(command=f"touch {target_name}")
+            target_conn.exec_command(command=f"touch {target_name}")
 
             with target_client.open(target_name, "wb") as tr:
                 tr.set_pipelined(pipelined=True)
