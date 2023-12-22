@@ -6,7 +6,7 @@ from airflow.models.param import Param
 import pendulum
 
 from decors import get_connection
-from utils import copy_streams, RFSC, walk_dir
+from utils import copy_streams, RFSC, file_exist, is_dir, walk_dir
 
 
 
@@ -52,14 +52,20 @@ def ssh2ssh():
         
         source_ssh_hook = get_connection(conn_id=s_con_id, params=s_params)
         target_ssh_hook = get_connection(conn_id=t_con_id, params=t_params)
-        target_client = target_ssh_hook.get_conn().open_sftp()
+        target_conn = target_ssh_hook.get_conn()
+        target_client = target_conn.open_sftp()
 
         sftp_client = source_ssh_hook.get_conn().open_sftp()
         sclient = RFSC(sftp_client)
+        
 
-        target_conn = target_ssh_hook.get_conn()
-
-        mappings = list(walk_dir(client=sclient, path=s_params["path"], prefix=""))
+        if file_exist(sftp_client, s_params['path']) and not is_dir(sftp_client, s_params['path']):
+            print("Special case it is a file")
+            mappings=[s_params['path']]
+            s_params['path']=os.path.dirname(s_params['path'])
+        else:
+            mappings = list(walk_dir(client=sclient, path=s_params["path"], prefix=""))
+        
         for fname in mappings:
             target_name = fname.replace(s_params["path"], t_params["path"])
             print("Processing", fname, "-->", target_name)

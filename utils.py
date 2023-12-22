@@ -221,11 +221,6 @@ class RFSC(object):
         self.client = client
 
     def list(self, path, get_info=True):
-        if file_exist(self.client, path) and not is_dir(self.client, path):
-            print("Special case it is a file")
-            if not get_info:
-                return [path]
-            return [{"path": path, "isdir": False}]
 
         if not get_info:
             return [el.filename for el in self.client.listdir_attr(path)]
