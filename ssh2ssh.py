@@ -42,9 +42,13 @@ def ssh2ssh():
         
         if (s_con_id:=s_params.pop('vault_id'))=="":
             s_con_id = s_params.get('connection_id', None)
+        else:
+            s_con_id='vault_'+s_con_id
     
         if (t_con_id:=t_params.pop('vault_id'))=="":
             t_con_id = t_params.get('connection_id', None)
+        else:
+            t_con_id='vault_'+t_con_id
         
         source_ssh_hook = get_connection(conn_id=s_con_id, params=s_params)
         target_ssh_hook = get_connection(conn_id=t_con_id, params=t_params)
