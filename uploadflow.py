@@ -22,7 +22,7 @@ def create_template(hrespo):
             hrespo[k] = json.loads(v)
         except:
             pass 
-
+    
     
     rec =  {
         "titles": [{"title": hrespo["title"]}],
@@ -31,7 +31,7 @@ def create_template(hrespo):
         ],
         "community": hrespo["community"], #"2d58eb08-af65-4cad-bd25-92f1a17d325b",
         "community_specific": {
-            "c44023c2-b0c1-4785-9adb-087ccd839e79": {
+            "fb46b5a7-bf69-40d4-943e-bd35b483c8ad": {
                 "helmholtz centre": ["Forschungszentrum Jülich"]
             }
         },
