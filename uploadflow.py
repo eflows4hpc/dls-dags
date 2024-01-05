@@ -107,7 +107,7 @@ def upload_example():
         if "id" in r:
             print(f"Draft record created {r['id']} --> {r['links']['self']}")
         else:
-            print("Something went wrong with registration", r, r.text)
+            print("Something went wrong with registration", r)
             return -1
 
         for [local, true_name] in files.items():
