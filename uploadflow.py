@@ -22,8 +22,7 @@ def create_template(hrespo):
             hrespo[k] = json.loads(v)
         except:
             pass 
-    
-    print("Metadata record: ", hrespo)
+
     
     rec =  {
         "titles": [{"title": hrespo["title"]}],
@@ -32,7 +31,7 @@ def create_template(hrespo):
         ],
         "community": hrespo["community"], #"2d58eb08-af65-4cad-bd25-92f1a17d325b",
         "community_specific": {
-            "2dc5046b-06b6-449f-bd49-73009c5303b1": {
+            "c44023c2-b0c1-4785-9adb-087ccd839e79": {
                 "helmholtz centre": ["Forschungszentrum Jülich"]
             }
         },
@@ -92,6 +91,7 @@ def upload_example():
         print("Got following metadata", entry)
 
         template = create_template(hrespo=entry["metadata"])
+        print("Submission template: ", template)
         community = get_community(server=server, community_id=template["community"])
         if not community:
             print("Not existing community")
