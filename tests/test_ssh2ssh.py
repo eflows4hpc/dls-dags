@@ -39,10 +39,14 @@ class TestSSH2SSH(unittest.TestCase):
         self.assertEqual(cparams["host"], "bar_host")
         self.assertEqual(cparams["port"], 33)
 
+    @patch("utils.is_dir")
+    @patch("utils.file_exist")
     @patch("decors.get_connection")
     @patch("utils.walk_dir")
     @patch("utils.copy_streams")
-    def test_run_cpy(self, cpy, w_dir, get_conn):
+    def test_run_cpy(self, cpy, w_dir, get_conn, exists, is_dir):
+        exists.return_value=True
+        is_dir.return_value=True
         source_ssh = MagicMock()
         source_client = MagicMock()
         source_ssh.get_conn().__enter__().open_sftp = source_client
