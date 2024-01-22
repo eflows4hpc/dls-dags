@@ -26,7 +26,7 @@ from utils import file_exist, copy_streams
         "mlflow_modelpath": Param(type="string", default="model/model.pkl")
     },
 )
-def mlflow_download():
+def model_stagein():
     @task()
     def copy_model(connection_id, **context):
         from utils import get_mlflow_client
@@ -76,4 +76,4 @@ def mlflow_download():
     setup_task >> cpy >> cleanup_task
 
 
-dag = mlflow_download()
+dag = model_stagein()
