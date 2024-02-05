@@ -88,11 +88,11 @@ def model_search_upload():
             with mlflow.start_run():
                 p = json.loads(p.replace('\'', '"'))
                 for parname, parvalue in p.items():
-                    client.log_param(parname, value=parvalue)
+                    client.log_param(key=parname, value=parvalue)
 
                 for m in metrics:
                     print(f"Logging metric {m} {dct[m][i]}")
-                    client.log_metric(m, dct[m][i])
+                    client.log_metric(key=m, value=dct[m][i])
 
         #clean up
         if 'temp_dir' in attrs:
