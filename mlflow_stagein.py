@@ -51,7 +51,7 @@ def model_stagein():
         sftp_client = ssh_hook.get_conn().open_sftp()
 
         with open(ret, "rb") as sr:
-            target_name = os.path.join(location, ret[len(temp_dir):])
+            target_name = os.path.join(location, os.path.basename(ret))
             print(f"Uploading: {ret}-->{target_name}")
             if file_exist(sftp=sftp_client, name=target_name):
                 print(target_name," exists. Overwritting.")
