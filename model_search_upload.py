@@ -82,6 +82,7 @@ def model_search_upload():
         print("Uploading model search results")
         df = pd.read_csv(os.path.join(temp_dir, 'pd.csv'), index_col=0)
         dct = df.to_dict()
+        print("Got following data", dct)
         metrics=['mean_test_score', 'mean_fit_time']
 
         for i, p in enumerate(dct['params'].values()):
