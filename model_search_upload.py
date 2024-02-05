@@ -85,14 +85,14 @@ def model_search_upload():
         metrics=['mean_test_score', 'mean_fit_time']
 
         for i, p in enumerate(dct['params'].values()):
-            with mlflow.start_run():
+            with mlflow.start_run(experiment_id=experiment_id):
                 p = json.loads(p.replace('\'', '"'))
                 for parname, parvalue in p.items():
-                    client.log_param(key=parname, value=parvalue)
+                    mlflow.log_param(key=parname, value=parvalue)
 
                 for m in metrics:
                     print(f"Logging metric {m} {dct[m][i]}")
-                    client.log_metric(key=m, value=dct[m][i])
+                    mlflow.log_metric(key=m, value=dct[m][i])
 
         #clean up
         if 'temp_dir' in attrs:
