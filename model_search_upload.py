@@ -92,6 +92,9 @@ def model_search_upload():
                     mlflow.log_param(key=parname, value=parvalue)
 
                 for m in metrics:
+                    if m not in dct:
+                        continue
+                    
                     print(f"Logging metric {m} {dct[m][i]}")
                     mlflow.log_metric(key=m, value=dct[m][i])
 
