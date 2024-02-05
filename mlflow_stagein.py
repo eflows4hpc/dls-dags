@@ -47,6 +47,7 @@ def model_stagein():
             
 
         ssh_hook = get_connection(conn_id=connection_id, **context)
+        clt = ssh_hook.get_conn()
         sftp_client = ssh_hook.get_conn().open_sftp()
 
         with open(ret, "rb") as sr:
@@ -55,7 +56,7 @@ def model_stagein():
             if file_exist(sftp=sftp_client, name=target_name):
                 print(target_name," exists. Overwritting.")
 
-            sftp_client.exec_command(command=f"touch {target_name}")
+            clt.exec_command(command=f"touch {target_name}")
             with sftp_client.open(target_name, "wb") as tr:
                 tr.set_pipelined(pipelined=True)
                 copy_streams(inp=sr, outp=tr)
