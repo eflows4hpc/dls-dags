@@ -94,13 +94,12 @@ def model_search_upload():
                 for m in metrics:
                     if m not in dct:
                         continue
-                    
+
                     print(f"Logging metric {m} {dct[m][i]}")
                     mlflow.log_metric(key=m, value=dct[m][i])
 
         #clean up
-        if 'temp_dir' in attrs:
-            shutil.rmtree(path=attrs["temp_dir"])
+        shutil.rmtree(temp_dir)
 
     setup_task = PythonOperator(python_callable=setup, task_id="setup_connection")
     a_id = setup_task.output["return_value"]
