@@ -56,7 +56,7 @@ def model_search_upload():
     def uploat_to_mlflow(temp_dir, **context):
         from utils import get_mlflow_client
         import shutil
-
+        import mlflow
 
         client = get_mlflow_client()
         parms = context["params"]
@@ -85,7 +85,7 @@ def model_search_upload():
         metrics=['mean_test_score', 'mean_fit_time']
 
         for i, p in enumerate(dct['params'].values()):
-            with client.create_run(experiment_id):
+            with mlflow.start_run():
                 p = json.loads(p.replace('\'', '"'))
                 for parname, parvalue in p.items():
                     client.log_param(parname, value=parvalue)
