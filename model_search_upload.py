@@ -85,7 +85,7 @@ def model_search_upload():
         metrics=['mean_test_score', 'mean_fit_time']
 
         for i, p in enumerate(dct['params'].values()):
-            with client.start_run():
+            with client.create_run(experiment_id):
                 p = json.loads(p.replace('\'', '"'))
                 for parname, parvalue in p.items():
                     client.log_param(parname, value=parvalue)
