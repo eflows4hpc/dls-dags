@@ -69,15 +69,7 @@ def model_search_upload():
             print(f"Experiment {experiment_name} was not found, creating new")
             experiment_id = client.create_experiment(experiment_name)
 
-        run = client.create_run(experiment_id)
-        print(f"Uploading to experiment {experiment_name}/{experiment_id}/{run.info.run_id}")
-
-        print("Uploading model")
-        client.log_artifact(
-            run_id=run.info.run_id,
-            local_path=os.path.join(temp_dir, 'model.dat'),
-            artifact_path="model",
-        )
+        print(f"Uploading to experiment {experiment_name}/{experiment_id}")
 
         print("Uploading model search results")
         df = pd.read_csv(os.path.join(temp_dir, 'pd.csv'), index_col=0)
@@ -86,7 +78,7 @@ def model_search_upload():
         metrics=['mean_test_score', 'mean_fit_time']
 
         for i, p in enumerate(dct['params'].values()):
-            with mlflow.start_run(experiment_id=experiment_id):
+            with mlflow.start_run(experiment_id=experiment_id) as run:
                 p = json.loads(p.replace('\'', '"'))
                 for parname, parvalue in p.items():
                     mlflow.log_param(key=parname, value=parvalue)
@@ -97,6 +89,15 @@ def model_search_upload():
 
                     print(f"Logging metric {m} {dct[m][i]}")
                     mlflow.log_metric(key=m, value=dct[m][i])
+
+                if dct['rank_test_score'][i]==1:
+                    print('This is the best model')
+                    print("Uploading model to run: ", run.info.run_id)
+                    mlflow.log_artifact(
+                        local_path=os.path.join(temp_dir, 'model.dat'),
+                        artifact_path="model",
+                    )
+
 
         #clean up
         shutil.rmtree(temp_dir)
